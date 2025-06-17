@@ -1,0 +1,12 @@
+import mongoose from "mongoose";
+
+const videoStatSchema = new mongoose.Schema({
+  youtubelink: String,
+  facebooklink: String,
+  youtubeViews: Number,
+  facebookViews: Number,
+  totalViews: Number,
+  uploadDate: { type: Date, default: Date.now }
+});
+
+export default mongoose.model("VideoStat", videoStatSchema);
