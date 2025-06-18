@@ -6,6 +6,7 @@ const videoStatSchema = new mongoose.Schema({
   youtubeViews: Number,
   facebookViews: Number,
   totalViews: Number,
+  facebookChannel: String,
   uploadDate: { type: Date, default: Date.now }
 });
 
