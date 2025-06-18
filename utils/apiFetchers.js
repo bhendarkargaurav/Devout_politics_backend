@@ -2,7 +2,7 @@ import axios from "axios";
 import { ApifyClient } from "apify-client";
 
 // API Keys
-const apifyToken = 'apify_api_7IhxsARIYIzV1p0YlVNPtEJshT0nnh1IcWAM';
+const apifyToken = 'apify_api_mChJAFaea7dGkzJghriqVBF7mOpgMA1ctxPV';
 const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
 
 // Initialize Apify client
