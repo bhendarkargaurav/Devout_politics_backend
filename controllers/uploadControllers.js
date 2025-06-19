@@ -1,3 +1,4 @@
+// No: 1 perfectly working we did pressentation on this code only
 // import fs from "fs";
 // import csv from "csv-parser";
 // import VideoStat from "../model/urlmodel.js";
@@ -8,61 +9,157 @@
 //   const results = [];
 //   const today = new Date().toISOString().split("T")[0];
 
-//   fs.createReadStream(filePath)
-//     .pipe(csv())
-//     .on("data", (row) => results.push(row))
-//     .on("end", async () => {
-//       for (const row of results) {
-//         const youtubeViews = await getYoutubeViews(row.youtubelink);
-//         const facebookViews = await getFacebookViews(row.facebooklink);
-//         const totalViews = youtubeViews + facebookViews;
+//   try {
+//     // Step 1: Parse CSV
+//     fs.createReadStream(filePath)
+//       .pipe(csv())
+//       .on("data", (row) => results.push(row))
+//       .on("end", async () => {
+//         // Step 2: Get all existing links
+//         const existingLinks = await VideoStat.find({}, "youtubelink facebooklink");
 
-//         await VideoStat.create({
-//           youtubelink: row.youtubelink,
-//           facebooklink: row.facebooklink,
-//           youtubeViews,
-//           facebookViews,
-//           totalViews,
-//           uploadDate: today
+//         const existingSet = new Set(
+//           existingLinks.map((doc) => `${doc.youtubelink}-${doc.facebooklink}`)
+//         );
+
+//         const filteredRows = results.filter((row) => {
+//           const key = `${row.youtubelink}-${row.facebooklink}`;
+//           return !existingSet.has(key); // Only keep unique (new) rows
 //         });
-//       }
 
-//       fs.unlinkSync(filePath); // delete temp file
-//       res.json({ success: true, message: "CSV uploaded and view data saved." });
-//     });
-// };
+//         // Step 3: Upload only non-duplicate data
+//         for (const row of filteredRows) {
+//           const youtubeViews = await getYoutubeViews(row.youtubelink);
+//           const facebookViews = await getFacebookViews(row.facebooklink);
+//           const totalViews = youtubeViews + facebookViews;
 
-// export const getStats = async (req, res) => {
-//   try {
-//     const data = await VideoStat.find().sort({ uploadDate: -1 });
-//     res.json({ success: true, data });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: "Error fetching stats." });
+
+//           //new line add after success run
+//           // let channelName = "Unknown";
+//           // if (videoData.owner_name) {
+//           //   const match = videoData.owner_name.match(/\| By (.+)$/);
+//           //   channelName = match ? match[1].trim() : videoData.owner_name;
+//           // }
+
+
+//           await VideoStat.create({
+//             youtubelink: row.youtubelink,
+//             facebooklink: row.facebooklink,
+//             youtubeViews,
+//             facebookViews,
+//             totalViews,
+//             uploadDate: today,
+//             // facebookChannel: channelName   //new
+//           });
+//         }
+
+//         fs.unlinkSync(filePath); // delete temp file
+
+//         return res.status(200).json({
+//           success: true,
+//           message: `${filteredRows.length} new records saved. ${
+//             results.length - filteredRows.length
+//           } duplicates ignored.`,
+//         });
+//       });
+//   } catch (error) {
+//     fs.unlinkSync(filePath); // cleanup even on error
+//     return res.status(500).json({ success: false, message: error.message });
 //   }
 // };
 
 
 
 
-// // Get all youtubelinks & facebooklink
-// export const getAllLinks = async (req, res) => {
+
+
+// No. 2 updated code for update the views of privious link.
+
+// // new code snippet do update old views of the data uploaded befor today
+// import fs from "fs"; 
+// import csv from "csv-parser";
+// import VideoStat from "../model/urlmodel.js";
+// import { getYoutubeViews, getFacebookViews } from "../utils/apiFetchers.js";
+
+// export const uploadCSV = async (req, res) => {
+//   const filePath = req.file.path;
+//   const results = [];
+//   const today = new Date().toISOString().split("T")[0];
+
 //   try {
-//     const { youtubelink, facebooklink } = req.query;
+//     // step 1 Parse CSV
+//     fs.createReadStream(filePath)
+//       .pipe(csv())
+//       .on("data", (row) => results.push(row))
+//       .on("end", async () => {
+//         // Step 2: Get all existing links
+//         const existingLinks = await VideoStat.find({}, "youtubelink facebooklink");
 
-//     // Create dynamic filter
-//     const filter = {};
-//     if (youtubelink) filter.youtubelink = youtubelink;
-//     if (facebooklink) filter.facebooklink = facebooklink;
+//         const existingSet = new Set(
+//           existingLinks.map((doc) => `${doc.youtubelink}-${doc.facebooklink}`)
+//         );
 
-//     const data = await VideoStat.find(filter).select("youtubelink facebooklink -_id");
+//         const filteredRows = results.filter((row) => {
+//           const key = `${row.youtubelink}-${row.facebooklink}`;
+//           return !existingSet.has(key); // Only keep unique (new) rows
+//         });
 
-//     res.status(200).json({
-//       success: true,
-//       count: data.length,
-//       links: data
-//     });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: "Error fetching links", error: err.message });
+//         // Step 3: Upload only non-duplicate data
+//         for (const row of filteredRows) {
+//           const youtubeViews = await getYoutubeViews(row.youtubelink);
+//           const facebookViews = await getFacebookViews(row.facebooklink);
+//           const totalViews = youtubeViews + facebookViews;
+
+//           //new line add after success run
+//           // let channelName = "Unknown";
+//           // if (videoData.owner_name) {
+//           //   const match = videoData.owner_name.match(/\| By (.+)$/);
+//           //   channelName = match ? match[1].trim() : videoData.owner_name;
+//           // }
+
+//           await VideoStat.create({
+//             youtubelink: row.youtubelink,
+//             facebooklink: row.facebooklink,
+//             youtubeViews,
+//             facebookViews,
+//             totalViews,
+//             uploadDate: today,
+//             // facebookChannel: channelName   //new
+//           });
+//         }
+
+//         // ✅ NEW: Update view counts for old records (uploaded before today)
+//         const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
+
+//         for (const record of oldRecords) {
+//           const updatedYoutubeViews = await getYoutubeViews(record.youtubelink);
+//           const updatedFacebookViews = await getFacebookViews(record.facebooklink);
+//           const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
+
+//           await VideoStat.updateOne(
+//             { _id: record._id },
+//             {
+//               $set: {
+//                 youtubeViews: updatedYoutubeViews,
+//                 facebookViews: updatedFacebookViews,
+//                 totalViews: updatedTotalViews,
+//               },
+//             }
+//           );
+//         }
+
+//         fs.unlinkSync(filePath); // delete temp file
+
+//         return res.status(200).json({
+//           success: true,
+//           message: `${filteredRows.length} new records saved. ${
+//             results.length - filteredRows.length
+//           } duplicates ignored.`,
+//         });
+//       });
+//   } catch (error) {
+//     fs.unlinkSync(filePath); // cleanup even on error
+//     return res.status(500).json({ success: false, message: error.message });
 //   }
 // };
 
@@ -70,11 +167,7 @@
 
 
 
-
-
-
-
-// new one
+// No.3 update views of previoud link and add channel in database
 import fs from "fs";
 import csv from "csv-parser";
 import VideoStat from "../model/urlmodel.js";
@@ -84,6 +177,12 @@ export const uploadCSV = async (req, res) => {
   const filePath = req.file.path;
   const results = [];
   const today = new Date().toISOString().split("T")[0];
+
+   // Immediately respond to frontend bcz it take time to upload
+  res.status(200).json({
+    success: true,
+    message: "File uploaded successfully. Processing in background.",
+  });
 
   try {
     // Step 1: Parse CSV
@@ -109,15 +208,6 @@ export const uploadCSV = async (req, res) => {
           const facebookViews = await getFacebookViews(row.facebooklink);
           const totalViews = youtubeViews + facebookViews;
 
-
-          //new line add after success run
-          // let channelName = "Unknown";
-          // if (videoData.owner_name) {
-          //   const match = videoData.owner_name.match(/\| By (.+)$/);
-          //   channelName = match ? match[1].trim() : videoData.owner_name;
-          // }
-
-
           await VideoStat.create({
             youtubelink: row.youtubelink,
             facebooklink: row.facebooklink,
@@ -125,8 +215,29 @@ export const uploadCSV = async (req, res) => {
             facebookViews,
             totalViews,
             uploadDate: today,
-            // facebookChannel: channelName   //new
+            youtubechannel: row.youtubechannel || "Unknown",
+            facebookchannel: row.facebookchannel || "Unknown",
           });
+        }
+
+        // ✅ NEW: Update view counts for old records (uploaded before today)
+        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
+
+        for (const record of oldRecords) {
+          const updatedYoutubeViews = await getYoutubeViews(record.youtubelink);
+          const updatedFacebookViews = await getFacebookViews(record.facebooklink);
+          const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
+
+          await VideoStat.updateOne(
+            { _id: record._id },
+            {
+              $set: {
+                youtubeViews: updatedYoutubeViews,
+                facebookViews: updatedFacebookViews,
+                totalViews: updatedTotalViews,
+              },
+            }
+          );
         }
 
         fs.unlinkSync(filePath); // delete temp file
@@ -143,7 +254,6 @@ export const uploadCSV = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 
 
