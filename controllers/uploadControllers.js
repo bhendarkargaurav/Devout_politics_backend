@@ -181,7 +181,7 @@ export const uploadCSV = async (req, res) => {
    // Immediately respond to frontend bcz it take time to upload
   res.status(200).json({
     success: true,
-    message: "File uploaded successfully. Processing in background.",
+    message: "File uploaded successfully",
   });
 
   try {
