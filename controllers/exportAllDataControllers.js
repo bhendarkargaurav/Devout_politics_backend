@@ -51,8 +51,6 @@
 //           });
 //         }
 
-       
-
 //         fs.unlinkSync(filePath);
 //         res.json({
 //           success: true,
@@ -65,12 +63,10 @@
 //   }
 // };
 
-
 import fs from "fs";
 import path from "path";
 import { Parser } from "json2csv";
 import VideoStat from "../model/urlmodel.js";
-
 
 export const getPaginatedVideos = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -96,17 +92,31 @@ export const getPaginatedVideos = async (req, res) => {
   }
 };
 
-
-
 export const exportAllDataToCSV = async (req, res) => {
   try {
-
-      const filter = {
+    const filter = {
       // youtubelink: { $ne: " " },
       // facebooklink: { $ne: " " },
       youtubechannel: { $ne: "Unknown" },
       facebookchannel: { $ne: "Unknown" },
     };
+
+    // get data based on data || date range
+    const { uploadDate, startDate, endDate } = req.query;
+    if (uploadDate) {
+      const start = new Date(uploadDate);
+      const end = new Date(uploadDate);
+      end.setHours(23, 59, 59, 999);
+
+      filter.uploadDate = {
+        $gte: start,
+        $lte: end,
+      };
+    } else if (startDate || endDate) {
+      filter.uploadDate = {};
+      if (startDate) filter.uploadDate.$gte = new Date(startDate);
+      if (endDate) filter.uploadDate.$lte = new Date(endDate);
+    }
 
     const allVideos = await VideoStat.find(filter).lean();
 
@@ -121,10 +131,10 @@ export const exportAllDataToCSV = async (req, res) => {
       "facebookchannel",
       "facebooklink",
       "facebookViews",
-      "totalViews", 
+      "totalViews",
       {
         label: "Date",
-        value: row => new Date(row.uploadDate).toLocaleString(),
+        value: (row) => new Date(row.uploadDate).toLocaleString(),
       },
     ];
 
@@ -137,12 +147,12 @@ export const exportAllDataToCSV = async (req, res) => {
     fs.mkdirSync("tmp", { recursive: true });
     fs.writeFileSync(filePath, csv);
 
-    res.download(filePath, fileName, err => {
+    res.download(filePath, fileName, (err) => {
       if (err) {
         console.error("Download error:", err);
         res.status(500).send("Download failed.");
       }
-      fs.unlink(filePath, () => {}); 
+      fs.unlink(filePath, () => {});
     });
   } catch (error) {
     console.error("Export CSV Error:", error);
