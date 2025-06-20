@@ -100,22 +100,30 @@ export const getPaginatedVideos = async (req, res) => {
 
 export const exportAllDataToCSV = async (req, res) => {
   try {
-    const allVideos = await VideoStat.find().lean();
+
+      const filter = {
+      // youtubelink: { $ne: " " },
+      // facebooklink: { $ne: " " },
+      youtubechannel: { $ne: "Unknown" },
+      facebookchannel: { $ne: "Unknown" },
+    };
+
+    const allVideos = await VideoStat.find(filter).lean();
 
     if (!allVideos || allVideos.length === 0) {
       return res.status(404).json({ message: "No video stats found" });
     }
 
     const fields = [
-      "youtubelink",
-      "facebooklink",
-      "youtubeViews",
-      "facebookViews",
-      "totalViews",
       "youtubechannel",
+      "youtubelink",
+      "youtubeViews",
       "facebookchannel",
+      "facebooklink",
+      "facebookViews",
+      "totalViews", 
       {
-        label: "uploadDate",
+        label: "Date",
         value: row => new Date(row.uploadDate).toLocaleString(),
       },
     ];
