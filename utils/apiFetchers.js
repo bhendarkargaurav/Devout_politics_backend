@@ -1,13 +1,11 @@
 import axios from "axios";
 import { ApifyClient } from "apify-client";
 
-// API Keys
 const apifyToken = 'apify_api_mChJAFaea7dGkzJghriqVBF7mOpgMA1ctxPV';
 const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
 
 // Initialize Apify client
 const apifyClient = new ApifyClient({ token: apifyToken });
-
 
 export const getYoutubeViews = async (youtubeUrl) => {
   try {
@@ -30,9 +28,6 @@ export const getYoutubeViews = async (youtubeUrl) => {
   }
 };
 
-/**
- * 🔍 Helper - Extract Video ID from YouTube URL
- */
 const extractYouTubeVideoId = (url) => {
   try {
     const regExp = /(?:v=|\/)([0-9A-Za-z_-]{11})(?:\?|&|$)/;
@@ -43,9 +38,7 @@ const extractYouTubeVideoId = (url) => {
   }
 };
 
-/**
- * 📘 Get Facebook Views via Apify
- */
+//
 export const AgetFacebookViews = async (facebookUrl) => {
   try {
     const input = { url: facebookUrl };
@@ -113,7 +106,7 @@ export const getFacebookViews = async (facebookUrl) => {
 
     let views = 0;
 
-    // ✅ Extract views from the correct location
+    //  Extract views from the correct location
     if (videoData?.statistics) {
       if (videoData.statistics.play_count) {
         views = parseInt(videoData.statistics.play_count);
@@ -133,4 +126,3 @@ export const getFacebookViews = async (facebookUrl) => {
     return 0;
   }
 };
-
