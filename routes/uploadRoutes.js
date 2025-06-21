@@ -4,10 +4,13 @@ import { uploadCSV, deleteAlldata } from "../controllers/uploadControllers.js";/
 import { getPaginatedVideos, exportAllDataToCSV, updatedviewsbydate  } from "../controllers/exportAllDataControllers.js";
 import { getDailyViews } from "../controllers/dailyviewController.js";
 
+//test
+import { testuploadCSV } from "../controllers/testuploadController.js";
+
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/upload-csv", upload.single("file"), uploadCSV);
+router.post("/upload-csv", upload.single("file"), testuploadCSV );//uploadCSV
 router.post("/delete-all", deleteAlldata);
 router.get("/daily-views", getDailyViews);
 router.get("/file-export", exportAllDataToCSV);
@@ -16,4 +19,7 @@ router.get("/refresh", updatedviewsbydate);
 // router.get("/stats", getStats);
 // router.get("/links", getAllLinks);
 
-export default router;
+//testingRoute
+router.post("/upload", upload.single("file"),testuploadCSV)
+
+export default router;   
