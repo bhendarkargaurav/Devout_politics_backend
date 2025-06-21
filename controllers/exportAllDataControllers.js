@@ -219,3 +219,81 @@ export const updatedviewsbydate = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
+
+
+
+// tommorow will check for fast uproch
+export const Aupdatedviewsbydate = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Refresh Done",
+  });
+
+  try {
+    const { date } = req.query;
+    if (!date) {
+      return res.status(400).json({ error: "Date query param is required" });
+    }
+
+    const selectedDate = new Date(date);
+    const endOfDate = new Date(date);
+    endOfDate.setHours(23, 59, 59, 999);
+
+    // Find all records from that exact date
+    const oldRecords = await VideoStat.find({
+      uploadDate: {
+        $gte: selectedDate,
+        $lte: endOfDate,
+      },
+    });
+
+    if (oldRecords.length === 0) {
+      return res.status(404).json({ message: "No records found for this date" });
+    }
+
+    // ⚡️ Fetch updated views in parallel
+    const updatedRecords = await Promise.all(
+      oldRecords.map(async (record) => {
+        const [updatedYoutubeViews, updatedFacebookViews] = await Promise.all([
+          getYoutubeViews(record.youtubelink),
+          getFacebookViews(record.facebooklink),
+        ]);
+
+        return {
+          _id: record._id,
+          youtubeViews: updatedYoutubeViews,
+          facebookViews: updatedFacebookViews,
+          totalViews: updatedYoutubeViews + updatedFacebookViews,
+        };
+      })
+    );
+
+    // ⚡️ Perform bulk update
+    const bulkOps = updatedRecords.map((record) => ({
+      updateOne: {
+        filter: { _id: record._id },
+        update: {
+          $set: {
+            youtubeViews: record.youtubeViews,
+            facebookViews: record.facebookViews,
+            totalViews: record.totalViews,
+          },
+        },
+      },
+    }));
+
+    await VideoStat.bulkWrite(bulkOps);
+
+    // 🔁 Send updated info back
+    res.json({
+      message: `Updated ${oldRecords.length} record(s) for date ${date}`,
+      updatedData: updatedRecords, // showing updated view data
+    });
+  } catch (error) {
+    console.error("View update error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

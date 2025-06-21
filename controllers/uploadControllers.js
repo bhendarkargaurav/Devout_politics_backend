@@ -66,6 +66,8 @@
 //   }
 // };
 
+
+
 // No.2 update views of previoud link and add channel in database
 import fs from "fs";
 import csv from "csv-parser";
@@ -121,7 +123,7 @@ export const uploadCSV = async (req, res) => {
           });
         }
 
-        // ✅ NEW: Update view counts for old records (uploaded before today)
+        // Update view counts for old records (uploaded before today)
         const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
 
         for (const record of oldRecords) {
