@@ -3,9 +3,9 @@ import { ApifyClient } from "apify-client";
 
 const apifyToken = 'apify_api_mChJAFaea7dGkzJghriqVBF7mOpgMA1ctxPV';
 const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
-
 // Initialize Apify client
 const apifyClient = new ApifyClient({ token: apifyToken });
+
 
 export const getYoutubeViews = async (youtubeUrl) => {
   try {
@@ -19,14 +19,21 @@ export const getYoutubeViews = async (youtubeUrl) => {
         key: youtubeApiKey
       }
     });
+    const stats = response.data?.items?.[0]?.statistics || {};
 
-    const views = response.data?.items?.[0]?.statistics?.viewCount || 0;
-    return parseInt(views);
+    return {
+      youtubeViews: parseInt(stats.viewCount || 0),
+      youtubeLikes: parseInt(stats.likeCount || 0),
+      youtubeComments: parseInt(stats.commentCount || 0),
+    };
+    // return parseInt(views, likes, comments);
   } catch (error) {
-    console.error("❌ YouTube API Error:", error.message);
+    console.error("YouTube API Error:", error.message);
     return 0;
   }
 };
+
+// Extract Video ID from YouTube URL
 
 const extractYouTubeVideoId = (url) => {
   try {
@@ -38,61 +45,6 @@ const extractYouTubeVideoId = (url) => {
   }
 };
 
-//
-export const AgetFacebookViews = async (facebookUrl) => {
-  try {
-    const input = { url: facebookUrl };
-
-    // const run = await apifyClient.actor("wpp8x7dMp9fuMVV7O").call(input);
-    const run = await apifyClient.actor("wpp8x7dMp9fuMVV7O").call(input);
-
-    const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
-    const videoData = items[0];
-
-    if (videoData?.views) {
-      return parseInt(videoData.views);
-    } else {
-      console.warn("⚠️ No views found in Facebook data");
-      return 0;
-    }
-  } catch (err) {
-    console.error("❌ Facebook API (Apify) Error:", err.message);
-    return 0;
-  }
-};
-
-
-
-
-//view not listed
-// export const getFacebookViews = async (facebookUrl) => {
-//   try {
-//     const input = { url: facebookUrl };
-//     const run = await apifyClient.actor("wpp8x7dMp9fuMVV7O").call(input);
-
-//     const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
-//     console.log("item is aaaaaa", items);
-//     const videoData = items[0]?.data;
-
-//     console.log("viewdata is:", videoData)
-//     // Try getting views from nested objects
-//     const views = videoData?.video_details?.view_count ||
-//                   videoData?.statistics?.view_count ||
-//                   videoData?.video_details?.views;
-
-//     if (views) {
-//       return parseInt(views);
-//     } else {
-//       console.warn("⚠️ No view count found in nested fields.");
-//       console.log("📊 Actor raw output:", videoData);
-//       return 0;
-//     }
-//   } catch (err) {
-//     console.error("❌ Facebook API (Apify) Error:", err.message);
-//     return 0;
-//   }
-// };
-
 
 export const getFacebookViews = async (facebookUrl) => {
   try {
@@ -102,25 +54,55 @@ export const getFacebookViews = async (facebookUrl) => {
     const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
     const videoData = items[0]?.data;
 
-    console.log("📊 Facebook videoData:", JSON.stringify(videoData, null, 2));
+     if (!videoData || !videoData.statistics) {
+      console.log("⚠️ Apify output missing or invalid:", JSON.stringify(videoData));
+      return {
+        facebookViews: 0,
+        facebookLikes: 0,
+        facebookComments: 0
+      };
+    }
 
-    let views = 0;
+    // let views = 0;
 
-    //  Extract views from the correct location
-    if (videoData?.statistics) {
-      if (videoData.statistics.play_count) {
-        views = parseInt(videoData.statistics.play_count);
-      } else if (videoData.statistics.video_view_count) {
-        views = parseInt(videoData.statistics.video_view_count);
+     const views = parseInt(videoData.statistics.video_view_count || 0);
+    const comments = parseInt(videoData.comment_count || 0);
+    console.log("📦 reactions_details = ", JSON.stringify(videoData.reactions_details, null, 2));
+    console.log("💬 comment_count = ", videoData.comment_count);
+
+      let likes = 0;
+    if (Array.isArray(videoData.reactions_details)) {
+      for (const reaction of videoData.reactions_details) {
+        const name = reaction?.localized_name || reaction?.node?.localized_name;
+        const count = reaction?.reaction_count || reaction?.node?.reaction_count;
+        if (name === "Like" && Number.isFinite(count)) {
+          likes = parseInt(count);
+          break;
+        }
       }
     }
 
-    if (isNaN(views)) {
-      console.warn("⚠️ Facebook view count is not a valid number.");
-      return 0;
-    }
+    console.log(`✅ Facebook Stats: Views = ${views}, Likes = ${likes}, Comments = ${comments}`);
 
-    return views;
+    // Extract views from the correct location
+    // if (videoData?.statistics) {
+    //   if (videoData.statistics.play_count) {
+    //     views = parseInt(videoData.statistics.play_count);
+    //   } else if (videoData.statistics.video_view_count) {
+    //     views = parseInt(videoData.statistics.video_view_count);
+    //   }
+    // }
+
+    // if (isNaN(views)) {
+    //   console.warn("⚠️ Facebook view count is not a valid number.");
+    //   return 0;
+    // }
+    // return views;
+     return {
+      facebookViews: views,
+      facebookLikes: likes,
+      facebookComments: comments
+    };
   } catch (err) {
     console.error("❌ Facebook API (Apify) Error:", err.message);
     return 0;
