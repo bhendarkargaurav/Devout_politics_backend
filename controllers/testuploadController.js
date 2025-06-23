@@ -2,10 +2,8 @@
 import fs from "fs";
 import csv from "csv-parser";
 import VideoStat from "../model/urlmodel.js";
-import {
-  getYoutubeViews,
-  getFacebookViews,
-} from "../utils/testapiiFetchers.js";
+import { getYoutubeViews, getFacebookViews, } from "../utils/testapiiFetchers.js";
+import { count } from "console";
 
 export const testuploadCSV = async (req, res) => {
   const filePath = req.file.path;
@@ -137,6 +135,104 @@ export const deleteAlldata = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: ` failed to delete recourds: ${error.message} `,
+    });
+  }
+};
+
+
+export const getAllLinks = async (req, res) => {
+  try {
+    const { platform, page = 1, limit = 10 } = req.query;
+
+    let projection = {};
+    let filter = {};
+
+    if (platform) {
+      if (platform.toLowerCase() === "youtube") {
+        projection = { youtubelink:1, youtubechannel:1, _id:0};
+        filter = { youtubelink: { $ne: "" }};
+      } else if (platform.toLowerCase() === "facebook") {
+        projection = { facebooklink:1, facebookchannel:1, _id:0 };
+        filter = { facebooklink: { $ne: "" }};
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Platform must be either 'youtube' or 'facebook'.",
+        });
+      }
+    } else {
+      projection = {
+        youtubelink: 1,
+        youtubechannel: 1,
+        facebooklink: 1,
+        facebookchannel: 1,
+        _id: 0,
+      };
+    }
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const links = await VideoStat.find(filter, projection).skip(skip).limit(limitNumber).lean();
+    const totalCount = await VideoStat.countDocuments(filter);
+
+     res.status(200).json({
+      success: true,
+      totalCount,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalCount / limitNumber),
+      links,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching links",
+      error: error.message,
+    });
+  };
+};
+
+
+export const getYoutubeChannel = async (req, res) => {
+  try {
+    const youtubeChannelCounts = await VideoStat.aggregate([
+      { $match: { youtubechannel: { $ne: "Unknown" } } },
+      { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      youtubeChannelCounts
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching Youtube channel counts",
+      error: error.message
+    });
+  };
+};
+
+
+export const getFacebookChannel = async(req, res) => {
+  try {
+    const facebookChannelCount = await VideoStat.aggregate([
+      { $match: { facebookchannel: { $ne: "Unknown" } } },
+      { $group: { _id: "$facebookchannel", count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      facebookChannelCount
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching Facebook channel count",
+      error: error.message
     });
   }
 };
