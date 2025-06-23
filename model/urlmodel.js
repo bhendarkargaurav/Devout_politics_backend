@@ -46,6 +46,15 @@ const videoStatSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  facebookLikes: {
+    type: Number,
+    default: 0,
+  },
+  facebookComments:{
+    type: Number,
+    default: 0,
+  }, 
+
   totalViews: {
     type: Number,
     default: 0,
