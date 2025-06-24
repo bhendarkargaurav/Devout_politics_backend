@@ -106,7 +106,10 @@ export const testuploadCSV = async (req, res) => {
             youtubeComments: updatedYoutubeComments,
           } = await getYoutubeViews(record.youtubelink);
 
-          const updatedFacebookViews = await getFacebookViews(record.facebooklink);
+          // const updatedFacebookViews = await getFacebookViews(record.facebooklink);
+          const { views, likes, comments } = await getFacebookViews(record.facebooklink);
+
+          let updatedFacebookViews = views;
           const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
           // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
           // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
@@ -117,9 +120,11 @@ export const testuploadCSV = async (req, res) => {
             {
               $set: {
                 youtubeViews: safeNumbers(updatedYoutubeViews),
-                facebookViews: safeNumbers(updatedFacebookViews),
                 youtubeLikes: safeNumbers(updatedYoutubeLikes),
                 youtubeComments: safeNumbers(updatedYoutubeComments),
+                facebookViews: safeNumbers(views),
+                facebookLikes: safeNumbers(likes),
+                facebookComments: safeNumbers(comments),
                 totalViews:
                   safeNumbers(updatedYoutubeViews) +
                   safeNumbers(updatedFacebookViews),
