@@ -55,13 +55,19 @@ export const getFacebookViews = async (facebookUrl) => {
     const videoData = items[0]?.data;
 
     let views = 0;
+    let comments = 0;
+    let likes = 0
 
     // Extract views from the correct location
     if (videoData?.statistics) {
       if (videoData.statistics.play_count) {
         views = parseInt(videoData.statistics.play_count);
+        likes = parseInt(videoData.statistics.reaction_count.count);
+        comments = parseInt(videoData.statistics.comment_count);
       } else if (videoData.statistics.video_view_count) {
         views = parseInt(videoData.statistics.video_view_count);
+        likes = parseInt(videoData.statistics.reaction_count.count);
+        comments = parseInt(videoData.statistics.comment_count);
       }
     }
 
@@ -69,8 +75,20 @@ export const getFacebookViews = async (facebookUrl) => {
       console.warn("⚠️ Facebook view count is not a valid number.");
       return 0;
     }
+    if (isNaN(likes)) {
+      console.warn("⚠️ Facebook likes count is not a valid number.");
+      return 0;
+    }
+    if (isNaN(comments)) {
+      console.warn("⚠️ Facebook comments count is not a valid number.");
+      return 0;
+    }
 
-    return views;
+    return {
+      views, 
+      likes,
+      comments,
+    }
   } catch (err) {
     console.error("❌ Facebook API (Apify) Error:", err.message);
     return 0;

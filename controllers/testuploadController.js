@@ -53,9 +53,10 @@ export const testuploadCSV = async (req, res) => {
             await getYoutubeViews(row.youtubelink);
 
           const facebookViews = await getFacebookViews(row.facebooklink);
-          const totalViews =
-            (Number.isFinite(youtubeViews) ? youtubeViews : 0) +
-            (Number.isFinite(facebookViews) ? facebookViews : 0);
+          const { views, likes, comments} = facebookViews
+          // const totalViews =
+            // (Number.isFinite(youtubeViews) ? youtubeViews : 0) +
+            // (Number.isFinite(facebookViews) ? facebookViews : 0);
 
           const safeNumber = (num) => (Number.isFinite(num) ? num : 0);
           // await VideoStat.create({
@@ -77,7 +78,9 @@ export const testuploadCSV = async (req, res) => {
             youtubeViews: safeNumber(youtubeViews),
             youtubeLikes: safeNumber(youtubeLikes),
             youtubeComments: safeNumber(youtubeComments),
-            facebookViews: safeNumber(facebookViews),
+            facebookViews: safeNumber(views),
+            facebookLikes: safeNumber(likes),
+            facebookComments: safeNumber(comments),
             totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
             uploadDate: today,
             youtubechannel: row.youtubechannel || "Unknown",
@@ -103,13 +106,11 @@ export const testuploadCSV = async (req, res) => {
             youtubeComments: updatedYoutubeComments,
           } = await getYoutubeViews(record.youtubelink);
 
-          const updatedFacebookViews = await getFacebookViews(
-            record.facebooklink
-          );
+          const updatedFacebookViews = await getFacebookViews(record.facebooklink);
           const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
           // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
           // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
-
+          console.log("updatedfacebookViews", updatedFacebookViews);
           const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
           await VideoStat.updateOne(
             { _id: record._id },
