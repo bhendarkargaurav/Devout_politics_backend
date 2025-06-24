@@ -129,6 +129,8 @@ export const exportAllDataToCSV = async (req, res) => {
       "youtubechannel",
       "youtubelink",
       "youtubeViews",
+      "youtubeLikes",
+      "youtubeComments",
       "facebookchannel",
       "facebooklink",
       "facebookViews",
