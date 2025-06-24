@@ -40,7 +40,7 @@ import { testuploadCSV, getAllLinks, getYoutubeChannel, getFacebookChannel } fro
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/upload-csv", upload.single("file"), uploadCSV);//uploadCSV
+router.post("/upload-csv", upload.single("file"), testuploadCSV);//uploadCSV
 router.post("/delete-all", deleteAlldata);
 router.get("/daily-views", getDailyViews);
 router.get("/file-export", exportAllDataToCSV);
