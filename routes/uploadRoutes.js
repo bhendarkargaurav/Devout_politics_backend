@@ -33,12 +33,12 @@ import { uploadCSV, deleteAlldata } from "../controllers/uploadControllers.js";/
 import { getPaginatedVideos, exportAllDataToCSV, updatedviewsbydate  } from "../controllers/exportAllDataControllers.js";
 import { getDailyViews } from "../controllers/dailyviewController.js";
 import { IsDbRunning } from "../controllers/isUploadingController.js";
-
+import upload from "../middleware/multer.js"
 //test
 import { testuploadCSV, getAllLinks, getYoutubeChannel, getFacebookChannel } from "../controllers/testuploadController.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+// const upload = multer({ dest: "uploads/" });
 
 router.post("/upload-csv", upload.single("file"), testuploadCSV);//uploadCSV
 router.post("/delete-all", deleteAlldata);
@@ -55,6 +55,6 @@ router.get("/fbchannel", getFacebookChannel);
 router.get("/isuploading", IsDbRunning);
 
 //testingRoute
-router.post("/upload", upload.single("file"), testuploadCSV);
+// router.post("/upload", upload.single("file"), testuploadCSV);
 
 export default router;   

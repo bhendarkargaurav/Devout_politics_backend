@@ -7,14 +7,16 @@ import { count } from "console";
 import uploadStatus from "../middleware/uploadStatusMiddleware.js"; 
 
 export const testuploadCSV = async (req, res) => {
+  // console.log("file path is", req.file);
   const filePath = req.file.path;
+  // console.log("file path is", req.file);
   const results = [];
   const today = new Date().toISOString().split("T")[0];
 
-  // res.status(200).json({
-  //   success: true,
-  //   message: "File uploaded successfully",
-  // });
+  res.status(200).json({
+    success: true,
+    message: "File uploaded successfully",
+  });
 
   try {
     
@@ -42,7 +44,7 @@ export const testuploadCSV = async (req, res) => {
           return !existingSet.has(key); // Only keep unique (new) rows
         });
 
-        // //changes2:-
+        // //changes2:- find total data to upload
         uploadStatus.dataToUpload = filteredRows.length;
 
         // Step 3: Upload only non-duplicate data
