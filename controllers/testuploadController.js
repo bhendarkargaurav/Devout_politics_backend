@@ -4,6 +4,7 @@ import csv from "csv-parser";
 import VideoStat from "../model/urlmodel.js";
 import { getYoutubeViews, getFacebookViews, } from "../utils/testapiiFetchers.js";
 import { count } from "console";
+import uploadStatus from "../middleware/uploadStatusMiddleware.js"; 
 
 export const testuploadCSV = async (req, res) => {
   const filePath = req.file.path;
@@ -16,6 +17,11 @@ export const testuploadCSV = async (req, res) => {
   // });
 
   try {
+    
+    //changes1:-
+    uploadStatus.isUploading = true;
+    uploadStatus.dataToUpload = 0;
+
     // Step 1: Parse CSV
     fs.createReadStream(filePath)
       .pipe(csv())
@@ -35,6 +41,9 @@ export const testuploadCSV = async (req, res) => {
           const key = `${row.youtubelink}-${row.facebooklink}`;
           return !existingSet.has(key); // Only keep unique (new) rows
         });
+
+        // //changes2:-
+        uploadStatus.dataToUpload = filteredRows.length;
 
         // Step 3: Upload only non-duplicate data
         for (const row of filteredRows) {
@@ -72,7 +81,14 @@ export const testuploadCSV = async (req, res) => {
             youtubechannel: row.youtubechannel || "Unknown",
             facebookchannel: row.facebookchannel || "Unknown",
           });
+
+            //changes3:-
+
+        uploadStatus.dataToUpload -= 1;
         }
+        //changes4:-
+        uploadStatus.dataToUpload = (await VideoStat.countDocuments({ uploadDate: { $lt: today } }));
+      
 
         //  Update view counts for old records (uploaded before today)
         const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
@@ -107,7 +123,13 @@ export const testuploadCSV = async (req, res) => {
               },
             }
           );
+
+          // changed 5:
+          uploadStatus.dataToUpload -= 1;
         }
+
+        //chanes 6
+        uploadStatus.isUploading = false;
 
         fs.unlinkSync(filePath); // delete temp file
 
@@ -120,6 +142,10 @@ export const testuploadCSV = async (req, res) => {
       });
   } catch (error) {
     fs.unlinkSync(filePath);
+
+    // changes7
+    uploadStatus.isUploading = false;
+    uploadStatus.dataToUpload = 0;
     return res.status(500).json({ success: false, message: error.message });
   }
 };
