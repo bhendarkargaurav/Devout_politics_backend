@@ -32,7 +32,7 @@ import multer from "multer";
 import { uploadCSV, deleteAlldata } from "../controllers/uploadControllers.js";//getAllLinks
 import { getPaginatedVideos, exportAllDataToCSV, updatedviewsbydate  } from "../controllers/exportAllDataControllers.js";
 import { getDailyViews } from "../controllers/dailyviewController.js";
-import { IsDbRunning } from "../controllers/isUploadingController.js";
+import { getUploadStatus } from "../controllers/isUploadingController.js";
 import upload from "../middleware/multer.js"
 //test
 import { testuploadCSV, getAllLinks, getYoutubeChannel, getFacebookChannel } from "../controllers/testuploadController.js";
@@ -52,9 +52,9 @@ router.get("/links", getAllLinks);
 router.get("/ytchannel", getYoutubeChannel);
 router.get("/fbchannel", getFacebookChannel);
 
-router.get("/isuploading", IsDbRunning);
+router.get("/isuploading", getUploadStatus);
 
 //testingRoute
-// router.post("/upload", upload.single("file"), testuploadCSV);
+router.post("/upload", upload.single("file"), uploadCSV);
 
 export default router;   
