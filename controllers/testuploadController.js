@@ -1,13 +1,13 @@
 // update views of previoud links and add channel in database
 import fs from "fs";
 import csv from "csv-parser";
+import { count } from "console";
 import VideoStat from "../model/urlmodel.js";
 import { getYoutubeViews, getFacebookViews, } from "../utils/testapiiFetchers.js";
-import { count } from "console";
 import uploadStatus from "../middleware/uploadStatusMiddleware.js"; 
 
+
 export const testuploadCSV = async (req, res) => {
-  // console.log("file path is", req.file);
   const filePath = req.file.path;
   const results = [];
   const today = new Date().toISOString().split("T")[0];
@@ -18,7 +18,6 @@ export const testuploadCSV = async (req, res) => {
   });
 
   try {
-    
     //changes1:-
     uploadStatus.isUploading = true;
     uploadStatus.dataToUpload = 0;
@@ -28,7 +27,6 @@ export const testuploadCSV = async (req, res) => {
       .pipe(csv())
       .on("data", (row) => results.push(row))
       .on("end", async () => {
-        // Step 2: Get all existing links
         const existingLinks = await VideoStat.find(
           {},
           "youtubelink facebooklink"
@@ -43,7 +41,7 @@ export const testuploadCSV = async (req, res) => {
           return !existingSet.has(key); // Only keep unique (new) rows
         });
 
-        // //changes2:- find total data to upload
+        //find total data to upload
         uploadStatus.dataToUpload = filteredRows.length;
 
         // Step 3: Upload only non-duplicate data
@@ -52,7 +50,7 @@ export const testuploadCSV = async (req, res) => {
             await getYoutubeViews(row.youtubelink);
 
           const facebookViews = await getFacebookViews(row.facebooklink);
-          const { views, likes, comments} = facebookViews
+          const { views, likes, comments} = facebookViews;
 
           const safeNumber = (num) => (Number.isFinite(num) ? num : 0);
 
@@ -71,30 +69,23 @@ export const testuploadCSV = async (req, res) => {
             facebookchannel: row.facebookchannel || "Unknown",
           });
 
-            //changes3:-
-
-        uploadStatus.dataToUpload -= 1;
+          uploadStatus.dataToUpload -= 1;
         }
-        //changes4:-
-        uploadStatus.dataToUpload = (await VideoStat.countDocuments({ uploadDate: { $lt: today } }));
-      
 
-        //  Update view counts for old records (uploaded before today)
-        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
+        //changes4:-count old records
+        uploadStatus.dataToUpload = (await VideoStat.countDocuments({ uploadDate: { $lt: today } }));
+
+        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });  // fetch old records
 
         for (const record of oldRecords) {
-          // const updatedYoutubeViews = await getYoutubeViews(record.youtubelink);
           const {
             youtubeViews: updatedYoutubeViews,
             youtubeLikes: updatedYoutubeLikes,
             youtubeComments: updatedYoutubeComments,
           } = await getYoutubeViews(record.youtubelink);
 
-          // const updatedFacebookViews = await getFacebookViews(record.facebooklink);
           const { views, likes, comments } = await getFacebookViews(record.facebooklink);
 
-          // let updatedFacebookViews = views;
-          // const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
           // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
           // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
           const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
@@ -114,11 +105,8 @@ export const testuploadCSV = async (req, res) => {
               },
             }
           );
-
-          // changed 5:
           uploadStatus.dataToUpload -= 1;
         }
-
         //chanes 6
         uploadStatus.isUploading = false;
 
@@ -133,11 +121,14 @@ export const testuploadCSV = async (req, res) => {
       });
   } catch (error) {
     fs.unlinkSync(filePath);
-
-    // changes7
     uploadStatus.isUploading = false;
     uploadStatus.dataToUpload = 0;
-    return res.status(500).json({ success: false, message: error.message });
+    return res
+    .status(500)
+    .json({ 
+      success: false,
+      message: error.message
+    });
   }
 };
 
