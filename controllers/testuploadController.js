@@ -9,13 +9,12 @@ import uploadStatus from "../middleware/uploadStatusMiddleware.js";
 export const testuploadCSV = async (req, res) => {
   // console.log("file path is", req.file);
   const filePath = req.file.path;
-  // console.log("file path is", req.file);
   const results = [];
   const today = new Date().toISOString().split("T")[0];
 
   res.status(200).json({
     success: true,
-    message: "File uploaded successfully",
+    message: "File uploaded successfully. Processing in background.",
   });
 
   try {
@@ -54,23 +53,8 @@ export const testuploadCSV = async (req, res) => {
 
           const facebookViews = await getFacebookViews(row.facebooklink);
           const { views, likes, comments} = facebookViews
-          // const totalViews =
-            // (Number.isFinite(youtubeViews) ? youtubeViews : 0) +
-            // (Number.isFinite(facebookViews) ? facebookViews : 0);
 
           const safeNumber = (num) => (Number.isFinite(num) ? num : 0);
-          // await VideoStat.create({
-          //   youtubelink: row.youtubelink,
-          //   facebooklink: row.facebooklink,
-          //   youtubeViews,
-          //   youtubeLikes,
-          //   youtubeComments,
-          //   facebookViews,
-          //   totalViews,
-          //   uploadDate: today,
-          //   youtubechannel: row.youtubechannel || "Unknown",
-          //   facebookchannel: row.facebookchannel || "Unknown",
-          // });
 
           await VideoStat.create({
             youtubelink: row.youtubelink,
@@ -109,11 +93,10 @@ export const testuploadCSV = async (req, res) => {
           // const updatedFacebookViews = await getFacebookViews(record.facebooklink);
           const { views, likes, comments } = await getFacebookViews(record.facebooklink);
 
-          let updatedFacebookViews = views;
-          const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
+          // let updatedFacebookViews = views;
+          // const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
           // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
           // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
-          console.log("updatedfacebookViews", updatedFacebookViews);
           const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
           await VideoStat.updateOne(
             { _id: record._id },
@@ -127,7 +110,7 @@ export const testuploadCSV = async (req, res) => {
                 facebookComments: safeNumbers(comments),
                 totalViews:
                   safeNumbers(updatedYoutubeViews) +
-                  safeNumbers(updatedFacebookViews),
+                  safeNumbers(views),
               },
             }
           );
@@ -141,12 +124,12 @@ export const testuploadCSV = async (req, res) => {
 
         fs.unlinkSync(filePath); // delete temp file
 
-        return res.status(200).json({
-          success: true,
-          message: `${filteredRows.length} new records saved. ${
-            results.length - filteredRows.length
-          } duplicates ignored.`,
-        });
+        // return res.status(200).json({
+        //   success: true,
+        //   message: `${filteredRows.length} new records saved. ${
+        //     results.length - filteredRows.length
+        //   } duplicates ignored.`,
+        // });
       });
   } catch (error) {
     fs.unlinkSync(filePath);
@@ -157,6 +140,8 @@ export const testuploadCSV = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
 
 export const deleteAlldata = async (req, res) => {
   try {
