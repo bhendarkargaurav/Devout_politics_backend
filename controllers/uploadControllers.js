@@ -1,33 +1,34 @@
-// update views of previoud links and add channel in database
+// update views of previous links and add channel in database
 import fs from "fs";
 import csv from "csv-parser";
 import VideoStat from "../model/urlmodel.js";
-import {
-  getYoutubeViews,
-  getFacebookViews,
-} from "../utils/apiFetchers.js";
+import { getYoutubeViews, getFacebookViews } from "../utils/testapiiFetchers.js";
+import uploadStatus from "../middleware/uploadStatusMiddleware.js";
 
 export const uploadCSV = async (req, res) => {
   const filePath = req.file.path;
   const results = [];
   const today = new Date().toISOString().split("T")[0];
 
+  // ❌ This is the mistake causing the error. You cannot send a response here.
+  // ✅ Comment this line.
   // res.status(200).json({
   //   success: true,
   //   message: "File uploaded successfully",
   // });
 
   try {
+    // changes1:-
+    uploadStatus.isUploading = true;
+    uploadStatus.dataToUpload = 0;
+
     // Step 1: Parse CSV
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => results.push(row))
       .on("end", async () => {
         // Step 2: Get all existing links
-        const existingLinks = await VideoStat.find(
-          {},
-          "youtubelink facebooklink"
-        );
+        const existingLinks = await VideoStat.find({}, "youtubelink facebooklink");
 
         const existingSet = new Set(
           existingLinks.map((doc) => `${doc.youtubelink}-${doc.facebooklink}`)
@@ -38,31 +39,17 @@ export const uploadCSV = async (req, res) => {
           return !existingSet.has(key); // Only keep unique (new) rows
         });
 
+        // changes2:-
+        uploadStatus.dataToUpload = filteredRows.length;
+
         // Step 3: Upload only non-duplicate data
         for (const row of filteredRows) {
-          const { youtubeViews, youtubeLikes, youtubeComments } =
-            await getYoutubeViews(row.youtubelink);
+          const { youtubeViews, youtubeLikes, youtubeComments } = await getYoutubeViews(row.youtubelink);
 
-          const { facebookViews, facebookLikes, facebookComments } =
-            await getFacebookViews(row.facebooklink);
-
-          const totalViews =
-            (Number.isFinite(youtubeViews) ? youtubeViews : 0) +
-            (Number.isFinite(facebookViews) ? facebookViews : 0);
+          const facebookViews = await getFacebookViews(row.facebooklink);
+          const { views, likes, comments } = facebookViews;
 
           const safeNumber = (num) => (Number.isFinite(num) ? num : 0);
-          // await VideoStat.create({
-          //   youtubelink: row.youtubelink,
-          //   facebooklink: row.facebooklink,
-          //   youtubeViews,
-          //   youtubeLikes,
-          //   youtubeComments,
-          //   facebookViews,
-          //   totalViews,
-          //   uploadDate: today,
-          //   youtubechannel: row.youtubechannel || "Unknown",
-          //   facebookchannel: row.facebookchannel || "Unknown",
-          // });
 
           await VideoStat.create({
             youtubelink: row.youtubelink,
@@ -70,66 +57,69 @@ export const uploadCSV = async (req, res) => {
             youtubeViews: safeNumber(youtubeViews),
             youtubeLikes: safeNumber(youtubeLikes),
             youtubeComments: safeNumber(youtubeComments),
-            facebookViews: safeNumber(facebookViews),
-            facebookLikes: safeNumber(facebookLikes),
-            facebookComments: safeNumber(facebookComments),
+            facebookViews: safeNumber(views),
+            facebookLikes: safeNumber(likes),
+            facebookComments: safeNumber(comments),
             totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
             uploadDate: today,
             youtubechannel: row.youtubechannel || "Unknown",
             facebookchannel: row.facebookchannel || "Unknown",
           });
+
+          // changes3:-
+          uploadStatus.dataToUpload -= 1;
         }
 
-        //  Update view counts for old records (uploaded before today)
+        // changes4:-
+        uploadStatus.dataToUpload = (await VideoStat.countDocuments({ uploadDate: { $lt: today } }));
+
+        // Update view counts for old records (uploaded before today)
         const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });
 
         for (const record of oldRecords) {
-          // const updatedYoutubeViews = await getYoutubeViews(record.youtubelink);
-          const {
-            youtubeViews: updatedYoutubeViews,
-            youtubeLikes: updatedYoutubeLikes,
-            youtubeComments: updatedYoutubeComments,
-          } = await getYoutubeViews(record.youtubelink);
+          const { youtubeViews: updatedYoutubeViews, youtubeLikes: updatedYoutubeLikes, youtubeComments: updatedYoutubeComments } = await getYoutubeViews(record.youtubelink);
 
-          const {
-            facebookViews: updatedFacebookViews,
-            facebookLikes: updatedFacebookLikes,
-            facebookComments: updatedFacebookComments,
-           } = await getFacebookViews(record.facebooklink);
-          const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
-          // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
-          // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
+          const { views, likes, comments } = await getFacebookViews(record.facebooklink);
 
           const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
+
           await VideoStat.updateOne(
             { _id: record._id },
             {
               $set: {
                 youtubeViews: safeNumbers(updatedYoutubeViews),
-                facebookViews: safeNumbers(updatedFacebookViews),
                 youtubeLikes: safeNumbers(updatedYoutubeLikes),
                 youtubeComments: safeNumbers(updatedYoutubeComments),
-                facebookLikes: safeNumbers(updatedFacebookLikes),
-                facebookComments: safeNumbers(updatedFacebookComments),
-                totalViews:
-                  safeNumbers(updatedYoutubeViews) +
-                  safeNumbers(updatedFacebookViews),
+                facebookViews: safeNumbers(views),
+                facebookLikes: safeNumbers(likes),
+                facebookComments: safeNumbers(comments),
+                totalViews: safeNumbers(updatedYoutubeViews) + safeNumbers(views),
               },
             }
           );
+
+          // changed 5:
+          uploadStatus.dataToUpload -= 1;
         }
+
+        // changes 6:
+        uploadStatus.isUploading = false;
 
         fs.unlinkSync(filePath); // delete temp file
 
+        // ✅ Final response (only one response should be sent)
         return res.status(200).json({
           success: true,
-          message: `${filteredRows.length} new records saved. ${
-            results.length - filteredRows.length
-          } duplicates ignored.`,
+          message: `${filteredRows.length} new records saved. ${results.length - filteredRows.length} duplicates ignored.`,
         });
       });
   } catch (error) {
     fs.unlinkSync(filePath);
+
+    // changes7:
+    uploadStatus.isUploading = false;
+    uploadStatus.dataToUpload = 0;
+
     return res.status(500).json({ success: false, message: error.message });
   }
 };

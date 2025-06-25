@@ -1,7 +1,9 @@
-export const IsDbRunning = async (req, res) => {
-  return res.status(200).json({
+
+import uploadStatus from "../middleware/uploadStatusMiddleware.js";
+export const getUploadStatus = (req, res) => {
+  res.status(200).json({
     success: true,
-    uploadingStatus: uploadStatus.isUploading,
-    toUpload: uploadStatus.dataToUpload,
+    isUploading: uploadStatus.isUploading,
+    remaining: uploadStatus.dataToUpload,
   });
 };
