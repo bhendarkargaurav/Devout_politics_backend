@@ -1,11 +1,12 @@
 // update views of previoud links and add channel in database
 import fs from "fs";
 import csv from "csv-parser";
-import { count } from "console";
 import VideoStat from "../model/urlmodel.js";
-import { getYoutubeViews, getFacebookViews, } from "../utils/testapiiFetchers.js";
-import uploadStatus from "../middleware/uploadStatusMiddleware.js"; 
-
+import {
+  getYoutubeViews,
+  getFacebookViews,
+} from "../utils/testapiiFetchers.js";
+import uploadStatus from "../middleware/uploadStatusMiddleware.js";
 
 export const testuploadCSV = async (req, res) => {
   const filePath = req.file.path;
@@ -50,32 +51,36 @@ export const testuploadCSV = async (req, res) => {
             await getYoutubeViews(row.youtubelink);
 
           const facebookViews = await getFacebookViews(row.facebooklink);
-          const { views, likes, comments} = facebookViews;
+          const { views, likes, comments } = facebookViews;
 
           const safeNumber = (num) => (Number.isFinite(num) ? num : 0);
 
           await VideoStat.create({
             youtubelink: row.youtubelink,
             facebooklink: row.facebooklink,
+            portallink: row.portallink,
             youtubeViews: safeNumber(youtubeViews),
             youtubeLikes: safeNumber(youtubeLikes),
             youtubeComments: safeNumber(youtubeComments),
             facebookViews: safeNumber(views),
             facebookLikes: safeNumber(likes),
             facebookComments: safeNumber(comments),
-            totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
-            uploadDate: today,
             youtubechannel: row.youtubechannel || "Unknown",
             facebookchannel: row.facebookchannel || "Unknown",
+            portalchannel: row.portalchannel || "Unknown",
+            totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
+            uploadDate: today,
           });
 
           uploadStatus.dataToUpload -= 1;
         }
 
         //changes4:-count old records
-        uploadStatus.dataToUpload = (await VideoStat.countDocuments({ uploadDate: { $lt: today } }));
+        uploadStatus.dataToUpload = await VideoStat.countDocuments({
+          uploadDate: { $lt: today },
+        });
 
-        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } });  // fetch old records
+        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } }); // fetch old records
 
         for (const record of oldRecords) {
           const {
@@ -84,7 +89,9 @@ export const testuploadCSV = async (req, res) => {
             youtubeComments: updatedYoutubeComments,
           } = await getYoutubeViews(record.youtubelink);
 
-          const { views, likes, comments } = await getFacebookViews(record.facebooklink);
+          const { views, likes, comments } = await getFacebookViews(
+            record.facebooklink
+          );
 
           // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
           // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
@@ -100,8 +107,7 @@ export const testuploadCSV = async (req, res) => {
                 facebookLikes: safeNumbers(likes),
                 facebookComments: safeNumbers(comments),
                 totalViews:
-                  safeNumbers(updatedYoutubeViews) +
-                  safeNumbers(views),
+                  safeNumbers(updatedYoutubeViews) + safeNumbers(views),
               },
             }
           );
@@ -123,16 +129,12 @@ export const testuploadCSV = async (req, res) => {
     fs.unlinkSync(filePath);
     uploadStatus.isUploading = false;
     uploadStatus.dataToUpload = 0;
-    return res
-    .status(500)
-    .json({ 
+    return res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
-
-
 
 export const deleteAlldata = async (req, res) => {
   try {
@@ -149,7 +151,6 @@ export const deleteAlldata = async (req, res) => {
   }
 };
 
-
 export const getAllLinks = async (req, res) => {
   try {
     const { platform, page = 1, limit = 10 } = req.query;
@@ -159,11 +160,11 @@ export const getAllLinks = async (req, res) => {
 
     if (platform) {
       if (platform.toLowerCase() === "youtube") {
-        projection = { youtubelink:1, youtubechannel:1, _id:0};
-        filter = { youtubelink: { $ne: "" }};
+        projection = { youtubelink: 1, youtubechannel: 1, _id: 0 };
+        filter = { youtubelink: { $ne: "" } };
       } else if (platform.toLowerCase() === "facebook") {
-        projection = { facebooklink:1, facebookchannel:1, _id:0 };
-        filter = { facebooklink: { $ne: "" }};
+        projection = { facebooklink: 1, facebookchannel: 1, _id: 0 };
+        filter = { facebooklink: { $ne: "" } };
       } else {
         return res.status(400).json({
           success: false,
@@ -184,10 +185,13 @@ export const getAllLinks = async (req, res) => {
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const links = await VideoStat.find(filter, projection).skip(skip).limit(limitNumber).lean();
+    const links = await VideoStat.find(filter, projection)
+      .skip(skip)
+      .limit(limitNumber)
+      .lean();
     const totalCount = await VideoStat.countDocuments(filter);
 
-     res.status(200).json({
+    res.status(200).json({
       success: true,
       totalCount,
       currentPage: pageNumber,
@@ -200,49 +204,47 @@ export const getAllLinks = async (req, res) => {
       message: "Error fetching links",
       error: error.message,
     });
-  };
+  }
 };
-
 
 export const getYoutubeChannel = async (req, res) => {
   try {
     const youtubeChannelCounts = await VideoStat.aggregate([
       { $match: { youtubechannel: { $ne: "Unknown" } } },
       { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
     ]);
 
     res.status(200).json({
       success: true,
-      youtubeChannelCounts
-    })
+      youtubeChannelCounts,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Error fetching Youtube channel counts",
-      error: error.message
+      error: error.message,
     });
-  };
+  }
 };
 
-
-export const getFacebookChannel = async(req, res) => {
+export const getFacebookChannel = async (req, res) => {
   try {
     const facebookChannelCount = await VideoStat.aggregate([
       { $match: { facebookchannel: { $ne: "Unknown" } } },
       { $group: { _id: "$facebookchannel", count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
     ]);
 
     res.status(200).json({
       success: true,
-      facebookChannelCount
-    })
+      facebookChannelCount,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Error fetching Facebook channel count",
-      error: error.message
+      error: error.message,
     });
   }
 };
