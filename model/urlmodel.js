@@ -67,6 +67,15 @@ const videoStatSchema = new mongoose.Schema({
     type: String,
     default: "Unknown",
   },
+  portallink: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  portalchannel: {
+    type: String,
+    default: "Unknown",
+  },
   uploadDate: {
     type: Date,
     default: Date.now,
