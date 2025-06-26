@@ -1,33 +1,12 @@
-// import mongoose from "mongoose";
-
-// const videoStatSchema = new mongoose.Schema({
-//   youtubelink: String,
-//   facebooklink: String,
-//   youtubeViews: Number,
-//   youtubeLikes: Number,
-//   youtubeComments: Number,
-//   facebookViews: Number,
-//   totalViews: Number,
-//   youtubechannel: String,   
-//   facebookchannel: String,
-//   uploadDate: { type: Date, default: Date.now }
-// });
-
-// export default mongoose.model("VideoStat", videoStatSchema);
-
-
-
 import mongoose from "mongoose";
 
 const videoStatSchema = new mongoose.Schema({
   youtubelink: {
     type: String,
-    required: true,
     trim: true,
   },
   facebooklink: {
     type: String,
-    required: true,
     trim: true,
   },
   youtubeViews: {
@@ -50,10 +29,10 @@ const videoStatSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  facebookComments:{
+  facebookComments: {
     type: Number,
     default: 0,
-  }, 
+  },
 
   totalViews: {
     type: Number,
@@ -69,7 +48,6 @@ const videoStatSchema = new mongoose.Schema({
   },
   portallink: {
     type: String,
-    required: true,
     trim: true,
   },
   portalchannel: {

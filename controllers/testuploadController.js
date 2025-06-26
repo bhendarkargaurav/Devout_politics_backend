@@ -13,10 +13,10 @@ export const testuploadCSV = async (req, res) => {
   const results = [];
   const today = new Date().toISOString().split("T")[0];
 
-  res.status(200).json({
-    success: true,
-    message: "File uploaded successfully. Processing in background.",
-  });
+  // res.status(200).json({
+  //   success: true,
+  //   message: "File uploaded successfully. Processing in background.",
+  // });
 
   try {
     //changes1:-
@@ -136,6 +136,10 @@ export const testuploadCSV = async (req, res) => {
   }
 };
 
+
+
+
+
 export const deleteAlldata = async (req, res) => {
   try {
     const result = await VideoStat.deleteMany({});
@@ -150,6 +154,10 @@ export const deleteAlldata = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 export const getAllLinks = async (req, res) => {
   try {
