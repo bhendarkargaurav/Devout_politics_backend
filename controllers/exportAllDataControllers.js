@@ -134,6 +134,10 @@ export const exportAllDataToCSV = async (req, res) => {
       "facebookchannel",
       "facebooklink",
       "facebookViews",
+      "facebookLikes",
+      "facebookComments",
+      "portallink",
+      "portalcomment",
       "totalViews",
       {
         label: "Date",

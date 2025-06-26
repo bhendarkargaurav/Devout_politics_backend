@@ -10,12 +10,10 @@ export const uploadCSV = async (req, res) => {
   const results = [];
   const today = new Date().toISOString().split("T")[0];
 
-  // ❌ This is the mistake causing the error. You cannot send a response here.
-  // ✅ Comment this line.
-  // res.status(200).json({
-  //   success: true,
-  //   message: "File uploaded successfully",
-  // });
+  res.status(200).json({
+    success: true,
+    message: "File uploaded successfully",
+  });
 
   try {
     // changes1:-
@@ -54,16 +52,18 @@ export const uploadCSV = async (req, res) => {
           await VideoStat.create({
             youtubelink: row.youtubelink,
             facebooklink: row.facebooklink,
+            portallink: row.portallink || "Unknown",
             youtubeViews: safeNumber(youtubeViews),
             youtubeLikes: safeNumber(youtubeLikes),
             youtubeComments: safeNumber(youtubeComments),
             facebookViews: safeNumber(views),
             facebookLikes: safeNumber(likes),
             facebookComments: safeNumber(comments),
-            totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
-            uploadDate: today,
             youtubechannel: row.youtubechannel || "Unknown",
             facebookchannel: row.facebookchannel || "Unknown",
+            portalchannel: row.portalchannel || "Unknown",
+            totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
+            uploadDate: today, 
           });
 
           // changes3:-
