@@ -79,45 +79,47 @@ export const testuploadCSV = async (req, res) => {
           uploadStatus.dataToUpload -= 1;
         }
 
-        //changes4:-count old records
-        uploadStatus.dataToUpload = await VideoStat.countDocuments({
-          uploadDate: { $lt: uploadDate },
-        });
+// from here imporation
 
-        const oldRecords = await VideoStat.find({ uploadDate: { $lt: uploadDate } }); // fetch old records
+        //changes4:-count old records    imp to update previus one data...
+        // uploadStatus.dataToUpload = await VideoStat.countDocuments({
+        //   uploadDate: { $lt: uploadDate },
+        // });
 
-        for (const record of oldRecords) {
-          const {
-            youtubeViews: updatedYoutubeViews,
-            youtubeLikes: updatedYoutubeLikes,
-            youtubeComments: updatedYoutubeComments,
-          } = await getYoutubeViews(record.youtubelink);
+        // const oldRecords = await VideoStat.find({ uploadDate: { $lt: uploadDate } }); // fetch old records
 
-          const { views, likes, comments } = await getFacebookViews(
-            record.facebooklink
-          );
+        // for (const record of oldRecords) {
+        //   const {
+        //     youtubeViews: updatedYoutubeViews,
+        //     youtubeLikes: updatedYoutubeLikes,
+        //     youtubeComments: updatedYoutubeComments,
+        //   } = await getYoutubeViews(record.youtubelink);
 
-          // const updatedTotalViews = (Number.isFinite(updatedYoutubeViews) ? updatedYoutubeViews : 0) +
-          // (Number.isFinite(updatedFacebookViews) ? updatedFacebookViews : 0)
-          const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
-          await VideoStat.updateOne(
-            { _id: record._id },
-            {
-              $set: {
-                youtubeViews: safeNumbers(updatedYoutubeViews),
-                youtubeLikes: safeNumbers(updatedYoutubeLikes),
-                youtubeComments: safeNumbers(updatedYoutubeComments),
-                facebookViews: safeNumbers(views),
-                facebookLikes: safeNumbers(likes),
-                facebookComments: safeNumbers(comments),
-                totalViews:
-                  safeNumbers(updatedYoutubeViews) + safeNumbers(views),
-              },
-            }
-          );
-          uploadStatus.dataToUpload -= 1;
-        }
-        //chanes 6
+        //   const { views, likes, comments } = await getFacebookViews(
+        //     record.facebooklink
+        //   );
+
+        //   const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
+        //   await VideoStat.updateOne(
+        //     { _id: record._id },
+        //     {
+        //       $set: {
+        //         youtubeViews: safeNumbers(updatedYoutubeViews),
+        //         youtubeLikes: safeNumbers(updatedYoutubeLikes),
+        //         youtubeComments: safeNumbers(updatedYoutubeComments),
+        //         facebookViews: safeNumbers(views),
+        //         facebookLikes: safeNumbers(likes),
+        //         facebookComments: safeNumbers(comments),
+        //         totalViews:
+        //           safeNumbers(updatedYoutubeViews) + safeNumbers(views),
+        //       },
+        //     }
+        //   );
+        //   uploadStatus.dataToUpload -= 1;
+        // }
+        
+        // till here imp code for update previous one
+
         uploadStatus.isUploading = false;
 
         fs.unlinkSync(filePath); 
