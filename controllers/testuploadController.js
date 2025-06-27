@@ -81,42 +81,42 @@ export const testuploadCSV = async (req, res) => {
 
 // from here imporation
 
-        //changes4:-count old records    imp to update previus one data...
-        // uploadStatus.dataToUpload = await VideoStat.countDocuments({
-        //   uploadDate: { $lt: uploadDate },
-        // });
+        changes4:-count old records    imp to update previus one data...
+        uploadStatus.dataToUpload = await VideoStat.countDocuments({
+          uploadDate: { $lt: uploadDate },
+        });
 
-        // const oldRecords = await VideoStat.find({ uploadDate: { $lt: uploadDate } }); // fetch old records
+        const oldRecords = await VideoStat.find({ uploadDate: { $lt: uploadDate } }); // fetch old records
 
-        // for (const record of oldRecords) {
-        //   const {
-        //     youtubeViews: updatedYoutubeViews,
-        //     youtubeLikes: updatedYoutubeLikes,
-        //     youtubeComments: updatedYoutubeComments,
-        //   } = await getYoutubeViews(record.youtubelink);
+        for (const record of oldRecords) {
+          const {
+            youtubeViews: updatedYoutubeViews,
+            youtubeLikes: updatedYoutubeLikes,
+            youtubeComments: updatedYoutubeComments,
+          } = await getYoutubeViews(record.youtubelink);
 
-        //   const { views, likes, comments } = await getFacebookViews(
-        //     record.facebooklink
-        //   );
+          const { views, likes, comments } = await getFacebookViews(
+            record.facebooklink
+          );
 
-        //   const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
-        //   await VideoStat.updateOne(
-        //     { _id: record._id },
-        //     {
-        //       $set: {
-        //         youtubeViews: safeNumbers(updatedYoutubeViews),
-        //         youtubeLikes: safeNumbers(updatedYoutubeLikes),
-        //         youtubeComments: safeNumbers(updatedYoutubeComments),
-        //         facebookViews: safeNumbers(views),
-        //         facebookLikes: safeNumbers(likes),
-        //         facebookComments: safeNumbers(comments),
-        //         totalViews:
-        //           safeNumbers(updatedYoutubeViews) + safeNumbers(views),
-        //       },
-        //     }
-        //   );
-        //   uploadStatus.dataToUpload -= 1;
-        // }
+          const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
+          await VideoStat.updateOne(
+            { _id: record._id },
+            {
+              $set: {
+                youtubeViews: safeNumbers(updatedYoutubeViews),
+                youtubeLikes: safeNumbers(updatedYoutubeLikes),
+                youtubeComments: safeNumbers(updatedYoutubeComments),
+                facebookViews: safeNumbers(views),
+                facebookLikes: safeNumbers(likes),
+                facebookComments: safeNumbers(comments),
+                totalViews:
+                  safeNumbers(updatedYoutubeViews) + safeNumbers(views),
+              },
+            }
+          );
+          uploadStatus.dataToUpload -= 1;
+        }
         
         // till here imp code for update previous one
 
