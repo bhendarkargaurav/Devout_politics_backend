@@ -11,7 +11,11 @@ import uploadStatus from "../middleware/uploadStatusMiddleware.js";
 export const testuploadCSV = async (req, res) => {
   const filePath = req.file.path;
   const results = [];
-  const today = new Date().toISOString().split("T")[0];
+
+  const { date } = req.body;
+  console.log("date is ", date);
+
+  const uploadDate = date || new Date().toISOString().split("T")[0];
 
   res.status(200).json({
     success: true,
@@ -69,7 +73,7 @@ export const testuploadCSV = async (req, res) => {
             facebookchannel: row.facebookchannel || "Unknown",
             portalchannel: row.portalchannel || "Unknown",
             totalViews: safeNumber(youtubeViews) + safeNumber(facebookViews),
-            uploadDate: today,
+            uploadDate: uploadDate,
           });
 
           uploadStatus.dataToUpload -= 1;
@@ -77,10 +81,10 @@ export const testuploadCSV = async (req, res) => {
 
         //changes4:-count old records
         uploadStatus.dataToUpload = await VideoStat.countDocuments({
-          uploadDate: { $lt: today },
+          uploadDate: { $lt: uploadDate },
         });
 
-        const oldRecords = await VideoStat.find({ uploadDate: { $lt: today } }); // fetch old records
+        const oldRecords = await VideoStat.find({ uploadDate: { $lt: uploadDate } }); // fetch old records
 
         for (const record of oldRecords) {
           const {
@@ -116,7 +120,7 @@ export const testuploadCSV = async (req, res) => {
         //chanes 6
         uploadStatus.isUploading = false;
 
-        fs.unlinkSync(filePath); // delete temp file
+        fs.unlinkSync(filePath); 
 
         // return res.status(200).json({
         //   success: true,

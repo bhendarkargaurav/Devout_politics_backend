@@ -2,7 +2,8 @@ import axios from "axios";
 import { ApifyClient } from "apify-client";
 
 const apifyToken = 'apify_api_mChJAFaea7dGkzJghriqVBF7mOpgMA1ctxPV';
-const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
+const youtubeApiKey = 'AIzaSyAw7tEpd_VoczeTePo9uU_rs7RzPHh959M';
+// const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
 // Initialize Apify client
 const apifyClient = new ApifyClient({ token: apifyToken });
 
@@ -29,6 +30,7 @@ export const getYoutubeViews = async (youtubeUrl) => {
     // return parseInt(views, likes, comments);
   } catch (error) {
     console.error("YouTube API Error:", error.message);
+    console.log("error", error);
     return 0;
   }
 };
