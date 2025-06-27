@@ -36,7 +36,6 @@ export const getYoutubeViews = async (youtubeUrl) => {
 };
 
 // Extract Video ID from YouTube URL
-
 const extractYouTubeVideoId = (url) => {
   try {
     const regExp = /(?:v=|\/)([0-9A-Za-z_-]{11})(?:\?|&|$)/;
@@ -74,15 +73,15 @@ export const getFacebookViews = async (facebookUrl) => {
     }
 
     if (isNaN(views)) {
-      console.warn("⚠️ Facebook view count is not a valid number.");
+      console.warn("Facebook view count is not a valid number.");
       return 0;
     }
     if (isNaN(likes)) {
-      console.warn("⚠️ Facebook likes count is not a valid number.");
+      console.warn("Facebook likes count is not a valid number.");
       return 0;
     }
     if (isNaN(comments)) {
-      console.warn("⚠️ Facebook comments count is not a valid number.");
+      console.warn("Facebook comments count is not a valid number.");
       return 0;
     }
 
@@ -92,7 +91,7 @@ export const getFacebookViews = async (facebookUrl) => {
       comments,
     }
   } catch (err) {
-    console.error("❌ Facebook API (Apify) Error:", err.message);
+    console.error("Facebook API (Apify) Error:", err.message);
     return 0;
   }
 };
