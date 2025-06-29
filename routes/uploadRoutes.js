@@ -32,10 +32,19 @@ import multer from "multer";
 import upload from "../middleware/multer.js"
 
 import { uploadCSV } from "../controllers/uploadControllers.js";
-import { getPaginatedVideos, exportAllDataToCSV, updatedviewsbydate  } from "../controllers/exportAllDataControllers.js";
+import { getPaginatedVideos, exportAllDataToCSV,  exportChannelData, updatedviewsbydate  } from "../controllers/exportAllDataControllers.js";
 import { getDailyViews } from "../controllers/dailyviewController.js";
 import { getUploadStatus } from "../controllers/isUploadingController.js";
-import { testuploadCSV, getAllLinks, getYoutubeChannel, getFacebookChannel, deleteAlldata } from "../controllers/testuploadController.js";
+import { 
+    testuploadCSV, 
+    getAllLinks, 
+    getYoutubeChannel, 
+    getYoutubeChannelData, 
+    getFacebookChannel, 
+    getFacebookChannelData, 
+    getportalData,
+    deleteAlldata 
+} from "../controllers/testuploadController.js";
 
 const router = express.Router();
 // const upload = multer({ dest: "uploads/" });
@@ -48,7 +57,15 @@ router.get("/paginate-data", getPaginatedVideos);
 router.get("/refresh", updatedviewsbydate);
 router.get("/links", getAllLinks);
 router.get("/ytchannel", getYoutubeChannel);
+router.get("/ytchannel-data", getYoutubeChannelData);
+
 router.get("/fbchannel", getFacebookChannel);
+router.get("/fbchannel-data", getFacebookChannelData);
+
+router.get("/export-channel-data", exportChannelData);
+
+router.get("/portal-data", getportalData)
+
 router.get("/isuploading", getUploadStatus);
 
 //testingRoute
