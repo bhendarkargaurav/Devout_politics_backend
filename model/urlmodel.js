@@ -58,6 +58,6 @@ const videoStatSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-});
+}, {timestamp: true});
 
 export default mongoose.model("VideoStat", videoStatSchema);
