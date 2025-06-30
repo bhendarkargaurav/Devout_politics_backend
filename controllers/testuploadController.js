@@ -260,7 +260,7 @@ export const getYoutubeChannelData = async (req, res) => {
 
     // Query to get only youtubelink and youtubeViews
     const channelData = await VideoStat.find({ youtubechannel: channelName })
-      .select('youtubelink youtubeViews youtubeLikes  youtubeComments -_id') // Only these fields, excluding _id
+      .select('youtubechannel youtubelink youtubeViews youtubeLikes youtubeComments uploadDate -_id') // Only these fields, excluding _id
       .skip(skip)
       .limit(Number(limit))
       .lean();
@@ -322,7 +322,7 @@ export const getFacebookChannelData = async (req, res) => {
     const skip = (page-1) * limit;
 
     const channelData = await VideoStat.find({ facebookchannel: channelName })
-    .select('facebooklink facebookViews  facebookLikes  facebookComments -_id')
+    .select('facebookchannel facebooklink facebookViews  facebookLikes  facebookComments uploadDate -_id')
     .skip(skip)
     .limit(Number(limit))
     .lean()
