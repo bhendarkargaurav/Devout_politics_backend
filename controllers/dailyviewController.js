@@ -1,4 +1,5 @@
 
+import { timeStamp } from "console";
 import VideoStat from "../model/urlmodel.js"
  
 export const getDailyViews = async (req, res) => {
@@ -9,7 +10,7 @@ export const getDailyViews = async (req, res) => {
     if (req.query.youtubelink) filter.youtubelink = req.query.youtubelink;
     if (req.query.facebooklink) filter.facebooklink = req.query.facebooklink;
 
-    const data = await VideoStat.find(filter);
+    const data = await VideoStat.find(filter).sort({createdAt: -1,  _id: -1 });
     res.status(200)
     .json({ 
       success: true,
