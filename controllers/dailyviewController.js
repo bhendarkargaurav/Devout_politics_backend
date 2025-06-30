@@ -9,7 +9,7 @@ export const getDailyViews = async (req, res) => {
     if (req.query.youtubelink) filter.youtubelink = req.query.youtubelink;
     if (req.query.facebooklink) filter.facebooklink = req.query.facebooklink;
 
-    const data = await VideoStat.find(filter).sort({ createdAt: -1 });
+    const data = await VideoStat.find(filter);//.sort({ createdAt: -1 })
     res.status(200)
     .json({ 
       success: true,
