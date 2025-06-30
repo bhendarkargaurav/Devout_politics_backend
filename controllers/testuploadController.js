@@ -242,6 +242,47 @@ export const getYoutubeChannel = async (req, res) => {
   }
 };
 
+
+export const getYoutubeChannelData = async (req, res) => {
+  try {
+    const { channelName, page = 1, limit = 20 } = req.query;
+
+    if (!channelName) {
+      return res.status(400).json({ success: false, message: "Channel name is required" });
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Query to get only youtubelink and youtubeViews
+    const channelData = await VideoStat.find({ youtubechannel: channelName })
+      .select('youtubelink youtubeViews -_id') // Only these fields, excluding _id
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    // Get total count for pagination
+    const totalCount = await VideoStat.countDocuments({ youtubechannel: channelName });
+
+    res.status(200).json({
+      success: true,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+      data: channelData,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching channel data",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+
 export const getFacebookChannel = async (req, res) => {
   try {
     const facebookChannelCount = await VideoStat.aggregate([
@@ -262,3 +303,76 @@ export const getFacebookChannel = async (req, res) => {
     });
   }
 };
+
+
+
+// get the facebookchanneldata
+export const getFacebookChannelData = async (req, res) => {
+  try {
+    const { channelName, page=1, limit=20 } = req.query;
+
+    if(!channelName) {
+      return res.status(401).json({success: "false", message: "Channel name is required"});
+    }
+    const skip = (page-1) * limit;
+
+    const channelData = await VideoStat.find({ facebookchannel: channelName })
+    .select('facebooklink facebookViews -_id')
+    .skip(skip)
+    .limit(Number(limit))
+    .lean()
+
+    const totalCount = await VideoStat.countDocuments({ facebookchannel: channelName });
+
+    return res.status(200).json({
+      success: true,
+      currentPage:(Number(page)),
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+      data: channelData,
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching channel data",
+      error: error.message,
+    })
+  }
+}
+
+
+
+export const getportalData = async (req, res) => {
+  try {
+    const { channelName, page = 1, limit = 20} = req.query;
+    
+    if(!channelName) {
+      return res.status(400).json({success: false, message: "Channel name i srequired"});
+    }
+    console.log("channel name is", channelName);
+    const skip = (page - 1) * limit;
+
+    const portalData = await VideoStat.find({ portalchannel: { $regex: `^${channelName}$`, $options: 'i' }})
+    // .select('_id')
+    .skip(skip)
+    .limit(Number(limit))
+    .lean()
+
+    const totalCount = await VideoStat.countDocuments({ portalchannel: { $regex: `^${channelName}$`, $options: 'i' }});
+
+    return res.status(200).json({
+      success: true,
+      currentPage: (Number(page)),
+      totalPages: (totalCount / limit),
+      totalCount,
+      data: portalData
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching channel data",
+      error: error.message,
+    })
+  }
+}
