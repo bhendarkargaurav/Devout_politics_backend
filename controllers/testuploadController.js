@@ -179,7 +179,10 @@ export const getAllLinks = async (req, res) => {
       } else if (platform.toLowerCase() === "facebook") {
         projection = { facebooklink: 1, facebookchannel: 1, _id: 0 };
         filter = { facebooklink: { $ne: "" } };
-      } else {
+      } else if (platform.toLowerCase() === "portal"){
+        projection = { portallink: 1, portalchannel: 1, _id: 0};
+        filter = { portallink: { $ne: "" } };
+      }else {
         return res.status(400).json({
           success: false,
           message: "Platform must be either 'youtube' or 'facebook'.",
@@ -191,6 +194,8 @@ export const getAllLinks = async (req, res) => {
         youtubechannel: 1,
         facebooklink: 1,
         facebookchannel: 1,
+        portallink: 1,
+        portalchannel: 1,
         _id: 0,
       };
     }
