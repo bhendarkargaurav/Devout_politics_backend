@@ -5,6 +5,7 @@ import cors from "cors"
 import uploadRoutes from "./routes/uploadRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import corsMiddleware from "./middleware/corsMiddleware.js"
 
 dotenv.config();
 
@@ -14,10 +15,12 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 
-app.use(cors({
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-}));
+app.use(corsMiddleware);
+
+// app.use(cors({
+//   origin: '*', 
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+// }));
 
 
 app.use("/api", uploadRoutes);
