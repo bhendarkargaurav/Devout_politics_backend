@@ -226,11 +226,39 @@ export const getAllLinks = async (req, res) => {
   }
 };
 
+// export const getYoutubeChannel = async (req, res) => {
+//   try {
+//     const youtubeChannelCounts = await VideoStat.aggregate([
+//       { $match: { youtubechannel: { $ne: "Unknown" } } },
+//       { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
+//       { $sort: { count: -1 } },
+//     ]);
+
+//     res.status(200).json({
+//       success: true,
+//       youtubeChannelCounts,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching Youtube channel counts",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 export const getYoutubeChannel = async (req, res) => {
   try {
     const youtubeChannelCounts = await VideoStat.aggregate([
       { $match: { youtubechannel: { $ne: "Unknown" } } },
-      { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
+      { 
+        $group: { 
+          _id: { $toLower: "$youtubechannel" }, // Group by lowercased channel name
+          // originalName: { $first: "$youtubechannel" }, // Keep one original name
+          count: { $sum: 1 }
+        }
+      },
       { $sort: { count: -1 } },
     ]);
 
@@ -285,15 +313,17 @@ export const getYoutubeChannelData = async (req, res) => {
 };
 
 
-
-
-
 export const getFacebookChannel = async (req, res) => {
   try {
     const facebookChannelCount = await VideoStat.aggregate([
       { $match: { facebookchannel: { $ne: "Unknown" } } },
-      { $group: { _id: "$facebookchannel", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
+      { 
+        $group: { 
+          _id: { $toLower: "$facebookchannel" }, // Group by lowercased channel name
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }, // Sort by highest count
     ]);
 
     res.status(200).json({
