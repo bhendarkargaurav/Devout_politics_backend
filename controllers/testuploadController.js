@@ -319,14 +319,14 @@ export const getFacebookChannel = async (req, res) => {
       { 
         $group: { 
           _id: { 
-            // Normalize: lowercase and remove all spaces
+            //lowercase and remove all spaces
             $replaceAll: { 
               input: { $toLower: "$facebookchannel" }, 
               find: " ", 
               replacement: "" 
             }
           },
-          originalName: { $first: "$facebookchannel" }, // Keep original name for display
+          originalName: { $first: "$facebookchannel" }, 
           count: { $sum: 1 }
         }
       },
@@ -361,7 +361,7 @@ export const getFacebookChannelData = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    // Clean the channel name: remove spaces and convert to lowercase
+    // remove spaces and convert to lowercase
     const cleanedChannelName = channelName.toLowerCase().replace(/\s/g, '');
 
     // Find matching channels (case and space insensitive)
