@@ -226,39 +226,11 @@ export const getAllLinks = async (req, res) => {
   }
 };
 
-// export const getYoutubeChannel = async (req, res) => {
-//   try {
-//     const youtubeChannelCounts = await VideoStat.aggregate([
-//       { $match: { youtubechannel: { $ne: "Unknown" } } },
-//       { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
-//       { $sort: { count: -1 } },
-//     ]);
-
-//     res.status(200).json({
-//       success: true,
-//       youtubeChannelCounts,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Error fetching Youtube channel counts",
-//       error: error.message,
-//     });
-//   }
-// };
-
-
 export const getYoutubeChannel = async (req, res) => {
   try {
     const youtubeChannelCounts = await VideoStat.aggregate([
       { $match: { youtubechannel: { $ne: "Unknown" } } },
-      { 
-        $group: { 
-          _id: { $toLower: "$youtubechannel" }, // Group by lowercased channel name
-          // originalName: { $first: "$youtubechannel" }, // Keep one original name
-          count: { $sum: 1 }
-        }
-      },
+      { $group: { _id: "$youtubechannel", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 
@@ -274,6 +246,33 @@ export const getYoutubeChannel = async (req, res) => {
     });
   }
 };
+
+// new one to most usnique
+// export const getYoutubeChannel = async (req, res) => {
+//   try {
+//     const youtubeChannelCounts = await VideoStat.aggregate([
+//       { $match: { youtubechannel: { $ne: "Unknown" } } },
+//       { 
+//         $group: { 
+//           _id: { $toLower: "$youtubechannel" }, // Group by lowercased channel name
+//           count: { $sum: 1 }
+//         }
+//       },
+//       { $sort: { count: -1 } },
+//     ]);
+
+//     res.status(200).json({
+//       success: true,
+//       youtubeChannelCounts,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching Youtube channel counts",
+//       error: error.message,
+//     });
+//   }
+// };
 
 
 export const getYoutubeChannelData = async (req, res) => {
@@ -319,7 +318,15 @@ export const getFacebookChannel = async (req, res) => {
       { $match: { facebookchannel: { $ne: "Unknown" } } },
       { 
         $group: { 
-          _id: { $toLower: "$facebookchannel" }, // Group by lowercased channel name
+          _id: { 
+            // Normalize: lowercase and remove all spaces
+            $replaceAll: { 
+              input: { $toLower: "$facebookchannel" }, 
+              find: " ", 
+              replacement: "" 
+            }
+          },
+          originalName: { $first: "$facebookchannel" }, // Keep original name for display
           count: { $sum: 1 }
         }
       },
@@ -333,7 +340,7 @@ export const getFacebookChannel = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching Facebook channel count",
+      message: "Error fetching Facebook channel counts",
       error: error.message,
     });
   }
@@ -341,40 +348,63 @@ export const getFacebookChannel = async (req, res) => {
 
 
 
+
+
 // get the facebookchanneldata
 export const getFacebookChannelData = async (req, res) => {
   try {
-    const { channelName, page=1, limit=20 } = req.query;
+    const { channelName, page = 1, limit = 20 } = req.query;
 
-    if(!channelName) {
-      return res.status(401).json({success: "false", message: "Channel name is required"});
+    if (!channelName) {
+      return res.status(400).json({ success: false, message: "Channel name is required" });
     }
-    const skip = (page-1) * limit;
 
-    const channelData = await VideoStat.find({ facebookchannel: channelName })
-    .select('facebookchannel facebooklink facebookViews  facebookLikes  facebookComments uploadDate -_id')
-    .skip(skip)
-    .limit(Number(limit))
-    .lean()
+    const skip = (page - 1) * limit;
 
-    const totalCount = await VideoStat.countDocuments({ facebookchannel: channelName });
+    // Clean the channel name: remove spaces and convert to lowercase
+    const cleanedChannelName = channelName.toLowerCase().replace(/\s/g, '');
+
+    // Find matching channels (case and space insensitive)
+    const channelData = await VideoStat.find({
+      $expr: {
+        $eq: [
+          { $replaceAll: { input: { $toLower: "$facebookchannel" }, find: " ", replacement: "" } },
+          cleanedChannelName
+        ]
+      }
+    })
+      .select('facebookchannel facebooklink facebookViews facebookLikes facebookComments uploadDate -_id')
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    // Count total documents (matching same normalized name)
+    const totalCount = await VideoStat.countDocuments({
+      $expr: {
+        $eq: [
+          { $replaceAll: { input: { $toLower: "$facebookchannel" }, find: " ", replacement: "" } },
+          cleanedChannelName
+        ]
+      }
+    });
 
     return res.status(200).json({
       success: true,
-      currentPage:(Number(page)),
+      currentPage: Number(page),
       totalPages: Math.ceil(totalCount / limit),
       totalCount,
       data: channelData,
-    })
+    });
 
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Error fetching channel data",
       error: error.message,
-    })
+    });
   }
-}
+};
+
 
 
 
