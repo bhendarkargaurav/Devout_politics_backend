@@ -41,7 +41,8 @@ import {
     getYoutubeChannel, 
     getYoutubeChannelData, 
     getFacebookChannel, 
-    getFacebookChannelData, 
+    getFacebookChannelData,
+    getPortalchannel, 
     getportalData,
     deleteAlldata 
 } from "../controllers/testuploadController.js";
@@ -64,6 +65,7 @@ router.get("/fbchannel-data", getFacebookChannelData);
 
 router.get("/export-channel-data", exportChannelData);
 
+router.get("/portal-channel", getPortalchannel);
 router.get("/portal-data", getportalData)
 
 router.get("/isuploading", getUploadStatus);
