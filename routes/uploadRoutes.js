@@ -76,4 +76,10 @@ router.put("/do-update/:id", UpdateVideoData);
 //testingRoute
 router.post("/upload", upload.single("file"), uploadCSV);
 
+//server should load without sleep
+router.get("/health", (req, res) => {
+    res.status(200).send('OK');
+})
+
+
 export default router;   
