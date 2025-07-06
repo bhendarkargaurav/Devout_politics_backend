@@ -163,7 +163,7 @@ export const deleteAlldata = async (req, res) => {
 };
 
 
-
+// made changes removed async await from getaall
 
 
 export const getAllLinks = async (req, res) => {
@@ -205,11 +205,16 @@ export const getAllLinks = async (req, res) => {
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const links = await VideoStat.find(filter, projection)
-      .skip(skip)
-      .limit(limitNumber)
-      .lean();
-    const totalCount = await VideoStat.countDocuments(filter);
+    // const links = await VideoStat.find(filter, projection) //await
+    //   .skip(skip)
+    //   .limit(limitNumber)
+    //   .lean();
+    // const totalCount = await VideoStat.countDocuments(filter); //await 
+
+     const [links, totalCount] = await Promise.all([
+      VideoStat.find(filter, projection).skip(skip).limit(limitNumber).lean(),
+      VideoStat.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
@@ -283,6 +288,8 @@ export const getYoutubeChannel = async(req, res) => {
 }
 
 
+
+
 export const getYoutubeChannelData = async (req, res) => {
   try {
     const { channelName, page = 1, limit = 20 } = req.query;
@@ -306,7 +313,7 @@ export const getYoutubeChannelData = async (req, res) => {
         ]
       }
     })
-    .select('youtubechannel youtubelink youtubeViews youtubeLikes youtubeComments uploadDate -_id')
+    .select('youtubechannel youtubelink youtubeViews youtubeLikes youtubeComments uploadDate _id')
     .skip(skip)
     .limit(Number(limit))
     .lean();
@@ -434,7 +441,7 @@ export const getFacebookChannelData = async (req, res) => {
         ]
       }
     })
-      .select('facebookchannel facebooklink facebookViews facebookLikes facebookComments uploadDate -_id')
+      .select('facebookchannel facebooklink facebookViews facebookLikes facebookComments uploadDate _id')
       .skip(skip)
       .limit(Number(limit))
       .lean();
@@ -513,7 +520,7 @@ export const getportalData = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const portalData = await VideoStat.find({ portalchannel: { $regex: `^${channelName}$`, $options: 'i' }})
-    // .select('_id')
+    .select('portalchannel portallink uploadDate _id')
     .skip(skip)
     .limit(Number(limit))
     .lean()
