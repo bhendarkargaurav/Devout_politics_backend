@@ -27,11 +27,14 @@ export const getDailyViews = async (req, res) => {
   try {
 
     const filter = {};
+    const {page = 1, limit = 10} = req.query;
   
     const { youtubelink, facebooklink, initialDate, endDate, uploadDates, uploadDate } = req.query;
   
     if(youtubelink) filter.youtubelink = youtubelink;
     if(facebooklink) filter.facebooklink = facebooklink;
+
+    const skip = (page - 1) * limit;
   
     // for Date Range Filter
     if(initialDate && endDate) {
@@ -50,10 +53,18 @@ export const getDailyViews = async (req, res) => {
       filter.uploadDate = new Date(uploadDate);
     }
   
-    const data = await VideoStat.find(filter).sort({ createdAt: -1 });
+    const data = await VideoStat.find(filter).sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(Number(limit))
+    .lean()
+
+    const totalCount = await VideoStat.countDocuments(filter);
   
     res.status(200).json({
       success: true,
+      currentPage: (Number(page)),
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
       data
     })
   } catch (error) {
