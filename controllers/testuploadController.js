@@ -530,7 +530,7 @@ export const getportalData = async (req, res) => {
     return res.status(200).json({
       success: true,
       currentPage: (Number(page)),
-      totalPages: (totalCount / limit),
+      totalPages: Math.ceil(totalCount / limit),
       totalCount,
       data: portalData
     })
