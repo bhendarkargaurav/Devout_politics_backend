@@ -71,7 +71,7 @@ router.get("/portal-channel", getPortalchannel);
 router.get("/portal-data", getportalData)
 
 router.get("/isuploading", getUploadStatus);
-router.put("/do-update/:id", UpdateVideoData);
+router.patch("/do-update/:id", UpdateVideoData);
 
 //testingRoute
 router.post("/upload", upload.single("file"), uploadCSV);
