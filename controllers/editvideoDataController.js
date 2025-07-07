@@ -11,14 +11,17 @@ export const UpdateVideoData = async (req, res) => {
 
         // fields allowed to edit/update
         const allowedFields = [
+            'youtubelink',
             'youtubeViews',
             'youtubechannel',
             'youtubeComments',
             'youtubeLikes',
+            'facebooklink',
             'facebookchannel',
             'facebookViews',
             'facebookLikes',
             'facebookComments',
+            'portallink',
             'portalchannel',
             'uploadDate', 
         ];
