@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 
-app.use(clerkMiddleware())
+// app.use(clerkMiddleware())
 
 app.use(corsMiddleware);
 
@@ -30,15 +30,15 @@ app.use(corsMiddleware);
 //test cleark
 // Use requireAuth() to protect this route
 // If user isn't authenticated, requireAuth() will redirect back to the homepage
-app.get('/protected', requireAuth(), async (req, res) => {
+// app.get('/protected', requireAuth(), async (req, res) => {
   // Use `getAuth()` to get the user's `userId`
-  const { userId } = getAuth(req)
+  // const { userId } = getAuth(req)
 
   // Use Clerk's JavaScript Backend SDK to get the user's User object
-  const user = await clerkClient.users.getUser(userId)
+  // const user = await clerkClient.users.getUser(userId)
 
-  return res.json({ user })
-})
+  // return res.json({ user })
+// })
 
 //complete with test cleark
 
