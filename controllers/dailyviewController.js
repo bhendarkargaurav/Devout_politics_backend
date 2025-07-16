@@ -293,32 +293,41 @@ export const getAllDataWithFilters = async (req, res) => {
       delete matchExpr.$and;
     }
 
+    
+  //data accourding to specific filter
+    //new change   we have a code its in commented formate: bottom of getalldatawithfilter func.
+
+
     // Fetch data and count
     const [data, totalCount] = await Promise.all([
-      VideoStat.find(matchExpr).sort({ createdAt: -1 }).lean(),
+      VideoStat.find(matchExpr).sort({ createdAt: -1 }).lean(), //.select(projection)
       VideoStat.countDocuments(matchExpr),
     ]);
 
     // Calculate totals
-    const totals = data.reduce(
-      (acc, item) => {
-        acc.totalYoutubeViews += item.youtubeViews || 0;
-        acc.totalYoutubeLikes += item.youtubeLikes || 0;
-        acc.totalYoutubeComments += item.youtubeComments || 0;
-        acc.totalFacebookViews += item.facebookViews || 0;
-        acc.totalFacebookLikes += item.facebookLikes || 0;
-        acc.totalFacebookComments += item.facebookComments || 0;
-        return acc;
-      },
-      {
-        totalYoutubeViews: 0,
-        totalYoutubeLikes: 0,
-        totalYoutubeComments: 0,
-        totalFacebookViews: 0,
-        totalFacebookLikes: 0,
-        totalFacebookComments: 0,
-      }
-    );
+   const totals = data.reduce(
+  (acc, item) => {
+    acc.totalYoutubeViews += item.youtubeViews || 0;
+    acc.totalFacebookViews += item.facebookViews || 0;
+
+    if (item.youtubelink) acc.totalYoutubeLinks += 1;
+    if (item.youtubechannel) acc.totalYoutubeChannels += 1;
+
+    if (item.facebooklink) acc.totalFacebookLinks += 1;
+    if (item.facebookchannel) acc.totalFacebookChannels += 1;
+
+    return acc;
+  },
+  {
+    totalYoutubeChannels: 0,
+    totalYoutubeLinks: 0,
+    totalYoutubeViews: 0,
+    totalFacebookChannels: 0,
+    totalFacebookLinks: 0,
+    totalFacebookViews: 0,
+  }
+);
+
 
     return res.status(200).json({
       success: true,
@@ -335,3 +344,83 @@ export const getAllDataWithFilters = async (req, res) => {
     });
   }
 };
+
+  //data accourding to specific filter
+    //new change
+    // Determine projection (which fields to return)
+// let projection = {}; // default: return all
+
+// const isOnlyYoutubeChannelFilter =
+//   ytchannelName &&
+//   !fbchannelName &&
+//   !uploadDate &&
+//   !initialDate &&
+//   !endDate &&
+//   !uploadDates &&
+//   !facebooklink &&
+//   !youtubelink;
+
+// const isOnlyFacebookChannelFilter =
+//   fbchannelName &&
+//   !ytchannelName &&
+//   !uploadDate &&
+//   !initialDate &&
+//   !endDate &&
+//   !uploadDates &&
+//   !facebooklink &&
+//   !youtubelink;
+
+// const isBothYtAndFbChannelFilterOnly =
+//   ytchannelName &&
+//   fbchannelName &&
+//   !uploadDate &&
+//   !initialDate &&
+//   !endDate &&
+//   !uploadDates &&
+//   !facebooklink &&
+//   !youtubelink;
+
+// if (isBothYtAndFbChannelFilterOnly) {
+//   projection = {
+//     youtubechannel: 1,
+//     youtubelink: 1,
+//     youtubeViews: 1,
+//     youtubeLikes: 1,
+//     youtubeComments: 1,
+//     facebookchannel: 1,
+//     facebooklink: 1,
+//     facebookViews: 1,
+//     facebookLikes: 1,
+//     facebookComments: 1,
+//     uploadDate: 1,
+//     createdAt: 1,
+//     updatedAt: 1,
+//     totalViews: 1,
+//   };
+// } else if (isOnlyYoutubeChannelFilter) {
+//   projection = {
+//     youtubechannel: 1,
+//     youtubelink: 1,
+//     youtubeViews: 1,
+//     youtubeLikes: 1,
+//     youtubeComments: 1,
+//     uploadDate: 1,
+//     createdAt: 1,
+//     updatedAt: 1,
+//     totalViews: 1,
+//   };
+// } else if (isOnlyFacebookChannelFilter) {
+//   projection = {
+//     facebookchannel: 1,
+//     facebooklink: 1,
+//     facebookViews: 1,
+//     facebookLikes: 1,
+//     facebookComments: 1,
+//     uploadDate: 1,
+//     createdAt: 1,
+//     updatedAt: 1,
+//     totalViews: 1,
+//   };
+// }
+
+// else: both filters or more filters applied → projection remains {}
