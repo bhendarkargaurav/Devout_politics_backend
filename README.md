@@ -15,3 +15,7 @@ API: /upload-csv
 
 ## How to Start Server 
 npm start
+
+
+
+// to show the complete data on dashboard beild 3 api all-ytdata, all-fbdata and all-podata.
