@@ -191,7 +191,7 @@ export const getAllPortalData = async(req, res) => {
 
 
 // get all data with multiple filter
-export const getAllDataWithFilters = async (req, res) => {
+export const getAllDataWithFilter = async (req, res) => {
   try {
     const {
       youtubelink,
@@ -424,3 +424,185 @@ export const getAllDataWithFilters = async (req, res) => {
 // }
 
 // else: both filters or more filters applied → projection remains {}
+
+
+export const getAllDataWithFilters = async (req, res) => {
+  try {
+    const {
+      youtubelink,
+      facebooklink,
+      initialDate,
+      endDate,
+      uploadDates,
+      uploadDate,
+      ytchannelName,
+      fbchannelName,
+    } = req.query;
+
+    // Date filter
+    const dateFilter = {};
+    if (initialDate && endDate) {
+      dateFilter.uploadDate = {
+        $gte: new Date(initialDate),
+        $lte: new Date(endDate),
+      };
+    } else if (uploadDates) {
+      const datesArray = Array.isArray(uploadDates)
+        ? uploadDates
+        : uploadDates.split(",");
+      dateFilter.uploadDate = {
+        $in: datesArray.map((date) => new Date(date.trim())),
+      };
+    } else if (uploadDate) {
+      dateFilter.uploadDate = new Date(uploadDate);
+    }
+
+    const normalize = (str) => str.toLowerCase().replace(/\s/g, "");
+
+    // ----------------------------
+    // Build YouTube filter logic
+    // ----------------------------
+    let ytMatchExpr = null;
+    if (ytchannelName || youtubelink || Object.keys(dateFilter).length) {
+      ytMatchExpr = { ...dateFilter };
+
+      if (ytchannelName) {
+        const ytArray = Array.isArray(ytchannelName)
+          ? ytchannelName
+          : ytchannelName.split(",");
+        ytMatchExpr.$expr = {
+          $in: [
+            {
+              $replaceAll: {
+                input: { $toLower: "$youtubechannel" },
+                find: " ",
+                replacement: "",
+              },
+            },
+            ytArray.map(normalize),
+          ],
+        };
+      }
+
+      if (youtubelink) {
+        ytMatchExpr.youtubelink = youtubelink;
+      }
+    }
+
+    // ----------------------------
+    // Build Facebook filter logic
+    // ----------------------------
+    let fbMatchExpr = null;
+    if (fbchannelName || facebooklink || Object.keys(dateFilter).length) {
+      fbMatchExpr = { ...dateFilter };
+
+      if (fbchannelName) {
+        const fbArray = Array.isArray(fbchannelName)
+          ? fbchannelName
+          : fbchannelName.split(",");
+        fbMatchExpr.$expr = {
+          $in: [
+            {
+              $replaceAll: {
+                input: { $toLower: "$facebookchannel" },
+                find: " ",
+                replacement: "",
+              },
+            },
+            fbArray.map(normalize),
+          ],
+        };
+      }
+
+      if (facebooklink) {
+        fbMatchExpr.facebooklink = facebooklink;
+      }
+    }
+
+    // ----------------------------
+    // Determine filter intent
+    // ----------------------------
+    const onlyYtFilter = ytchannelName || youtubelink;
+    const onlyFbFilter = fbchannelName || facebooklink;
+
+    let ytData = [];
+    let fbData = [];
+
+    if (onlyYtFilter && !onlyFbFilter) {
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+    } else if (onlyFbFilter && !onlyYtFilter) {
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+    } else if (!onlyYtFilter && !onlyFbFilter && Object.keys(dateFilter).length) {
+      // Only date filter
+      ytData = await VideoStat.find(dateFilter).lean();
+      fbData = await VideoStat.find(dateFilter).lean();
+    } else if (!onlyYtFilter && !onlyFbFilter) {
+      // No filters at all
+      ytData = await VideoStat.find({}).lean();
+      fbData = await VideoStat.find({}).lean();
+    } else {
+      // If both yt and fb filters are applied (rare case)
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+    }
+
+    // ----------------------------
+    // YouTube totals
+    // ----------------------------
+    const ytTotals = ytData.reduce(
+      (acc, item) => {
+        acc.totalYoutubeViews += item.youtubeViews || 0;
+        if (item.youtubelink) acc.totalYoutubeLinks += 1;
+        if (item.youtubechannel) acc.totalYoutubeChannels += 1;
+        return acc;
+      },
+      {
+        totalYoutubeViews: 0,
+        totalYoutubeLinks: 0,
+        totalYoutubeChannels: 0,
+      }
+    );
+
+    // ----------------------------
+    // Facebook totals
+    // ----------------------------
+    const fbTotals = fbData.reduce(
+      (acc, item) => {
+        acc.totalFacebookViews += item.facebookViews || 0;
+        if (item.facebooklink) acc.totalFacebookLinks += 1;
+        if (item.facebookchannel) acc.totalFacebookChannels += 1;
+        return acc;
+      },
+      {
+        totalFacebookViews: 0,
+        totalFacebookLinks: 0,
+        totalFacebookChannels: 0,
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      filtersUsed: {
+        ytMatchExpr: ytMatchExpr || {},
+        fbMatchExpr: fbMatchExpr || {},
+      },
+      youtube: {
+        count: ytData.length,
+        totals: ytTotals,
+        data: ytData,
+      },
+      facebook: {
+        count: fbData.length,
+        totals: fbTotals,
+        data: fbData,
+      },
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching data",
+      error: error.message,
+    });
+  }
+};
