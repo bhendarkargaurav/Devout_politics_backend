@@ -28,10 +28,10 @@
 // };
 
 import PDFDocument from "pdfkit";
-import PDFTable from "pdfkit-table"; //required to patch PDFDocument
+import pdfkitTable from "pdfkit-table"; // 👈 this is enough to enable doc.table()
 
-export const exportToPDF = async (res, data, filename, title = "Filtered Report") => {
-  const doc = new PDFDocument({ margin: 30, size: "A4" });
+export const exportToPDF = (res, data, filename, title = "Filtered Report") => {
+  const doc = new pdfkitTable({ margin: 30, size: "A4" });
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -40,26 +40,25 @@ export const exportToPDF = async (res, data, filename, title = "Filtered Report"
 
   doc.fontSize(16).text(title, { align: "center" }).moveDown();
 
-  if (data.length === 0) {
-    doc.text("No data to display");
+  if (!data || data.length === 0) {
+    doc.text("No data to display.");
     doc.end();
     return;
   }
 
   const headers = Object.keys(data[0]);
-  const rows = data.map((item) => headers.map((h) => String(item[h] ?? "")));
+  const rows = data.map((item) => headers.map((key) => String(item[key] ?? "")));
 
-  // ✅ Actual table
-  await doc.table(
+  doc.table(
     {
       headers,
       rows,
     },
     {
-      prepareHeader: () => doc.font("Helvetica-Bold"),
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
       prepareRow: (row, i) => doc.font("Helvetica").fontSize(8),
     }
   );
 
-  doc.end();
+  doc.end(); // ✅ End the document stream
 };
