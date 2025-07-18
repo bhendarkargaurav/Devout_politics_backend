@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { Parser } from "json2csv";
 import VideoStat from "../model/urlmodel.js";
-import { getYoutubeViews, getFacebookViews } from "../utils/apiFetchers.js";
+import { getYoutubeViews, getFacebookViews } from "../utils/testapiiFetchers.js";
 
 export const getPaginatedVideos = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -104,8 +104,6 @@ export const exportAllDataToCSV = async (req, res) => {
 };
 
 
-
-
 /// export the channel data using the platform type yt or fb and channelName
 export const exportChannelData = async (req, res) => {
   try {
@@ -154,66 +152,112 @@ export const exportChannelData = async (req, res) => {
 
 
 
+
+// update old data for single date and date range
 export const updatedviewsbydate = async (req, res) => {
-   res.status(200).json({
-    success: true,
-    message: "Refresh Done",
-  });
   try {
-    const { date } = req.query;
-    if (!date) {
-      return res.status(400).json({ error: "Date query param is required" });
-    }
+    const { date, initialDate, endDate } = req.query;
 
-    const selectedDate = new Date(date);
-    const endOfDate = new Date(date);
-    endOfDate.setHours(23, 59, 59, 999);
+    let query = {};
 
-    //Find all records from that exact date
-    const oldRecords = await VideoStat.find({
-      uploadDate: {
+    if (date) {
+      // Single date
+      const selectedDate = new Date(date);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.uploadDate = {
         $gte: selectedDate,
-        $lte: endOfDate,
-      },
-    });
+        $lte: endOfDay,
+      };
+    } else if (initialDate && endDate) {
+      // Date range
+      const start = new Date(initialDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-    if (oldRecords.length === 0) {
-      return res.status(404).json({ message: "No records found for this date" });
+      query.uploadDate = {
+        $gte: start,
+        $lte: end,
+      };
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide either `date` or both `initialDate` and `endDate`.",
+      });
     }
 
-    //Update each record with latest views
-    for (const record of oldRecords) {
-      const updatedYoutubeViews = await getYoutubeViews(record.youtubelink);
-      const updatedFacebookViews = await getFacebookViews(record.facebooklink);
-      const updatedTotalViews = updatedYoutubeViews + updatedFacebookViews;
+    // Fetch records
+    const records = await VideoStat.find(query);
 
-      await VideoStat.updateOne(
-        { _id: record._id },
-        {
-          $set: {
-            youtubeViews: updatedYoutubeViews,
-            facebookViews: updatedFacebookViews,
-            totalViews: updatedTotalViews,
-          },
-        }
-      );
+    if (records.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No records found for the specified date(s).",
+      });
     }
-    res.json({
-      message: `Updated ${oldRecords.length} record(s) for date ${date}`,
-      updatedData: oldRecords,
+
+    const updatedRecords = [];
+    const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
+
+    for (const record of records) {
+      try {
+        const {
+          youtubeViews: updatedYoutubeViews,
+          youtubeLikes: updatedYoutubeLikes,
+          youtubeComments: updatedYoutubeComments,
+        } = await getYoutubeViews(record.youtubelink);
+
+        const {
+          views: fbViews,
+          likes: fbLikes,
+          comments: fbComments,
+        } = await getFacebookViews(record.facebooklink);
+
+        const totalViews =
+          safeNumbers(updatedYoutubeViews) + safeNumbers(fbViews);
+
+        await VideoStat.updateOne(
+          { _id: record._id },
+          {
+            $set: {
+              youtubeViews: safeNumbers(updatedYoutubeViews),
+              youtubeLikes: safeNumbers(updatedYoutubeLikes),
+              youtubeComments: safeNumbers(updatedYoutubeComments),
+              facebookViews: safeNumbers(fbViews),
+              facebookLikes: safeNumbers(fbLikes),
+              facebookComments: safeNumbers(fbComments),
+              totalViews,
+            },
+          }
+        );
+
+        updatedRecords.push({
+          _id: record._id,
+          youtubelink: record.youtubelink,
+          facebooklink: record.facebooklink,
+          uploadDate: record.uploadDate,
+          youtubeViews: safeNumbers(updatedYoutubeViews),
+          facebookViews: safeNumbers(fbViews),
+          totalViews,
+        });
+
+        console.log(`✅ Updated: ${record._id}`);
+      } catch (err) {
+        console.error(`❌ Failed to update record ${record._id}:`, err.message);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Updated ${updatedRecords.length} records`,
+      updatedData: updatedRecords,
     });
   } catch (error) {
-    console.error("View update error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error updating views:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
 };
-
-
-
-
-
-
-
-   
-
-    
