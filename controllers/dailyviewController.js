@@ -704,10 +704,10 @@ if (req.query.format === "pdf") {
 // Default: return JSON if no format given
 return res.status(200).json({
   success: true,
-  filtersUsed: {
-    ytMatchExpr: ytMatchExpr || {},
-    fbMatchExpr: fbMatchExpr || {},
-  },
+  // filtersUsed: {
+  //   ytMatchExpr: ytMatchExpr || {},
+  //   fbMatchExpr: fbMatchExpr || {},
+  // },
   youtube: {
     count: ytData.length,
     totals: ytTotals,
