@@ -4,6 +4,7 @@ import path from "path";
 import { Parser } from "json2csv";
 import VideoStat from "../model/urlmodel.js";
 import { getYoutubeViews, getFacebookViews } from "../utils/testapiiFetchers.js";
+import uploadStatus from "../middleware/uploadStatusMiddleware.js";
 
 export const getPaginatedVideos = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -151,9 +152,8 @@ export const exportChannelData = async (req, res) => {
 
 
 
-
-
-// update old data for single date and date range
+//Updating old data for a date and date range perfectly and showing 
+// how much data is remaing to update:
 export const updatedviewsbydate = async (req, res) => {
   try {
     const { date, initialDate, endDate } = req.query;
@@ -200,6 +200,12 @@ export const updatedviewsbydate = async (req, res) => {
     const updatedRecords = [];
     const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
 
+    // ------------------------ NEW CODE START --------------------------
+    // Set upload status tracking
+    uploadStatus.isUploading = true;
+    uploadStatus.dataToUpload = records.length;
+    // ------------------------ NEW CODE END ----------------------------
+
     for (const record of records) {
       try {
         const {
@@ -242,11 +248,22 @@ export const updatedviewsbydate = async (req, res) => {
           totalViews,
         });
 
-        console.log(`✅ Updated: ${record._id}`);
+        // ------------------------ NEW CODE START --------------------------
+        uploadStatus.dataToUpload--; // Decrement count
+        console.log(`Remaining: ${uploadStatus.dataToUpload}`); // Log remaining updates
+        // ------------------------ NEW CODE END ----------------------------
+
+        console.log(` Updated: ${record._id}`);
       } catch (err) {
-        console.error(`❌ Failed to update record ${record._id}:`, err.message);
+        console.error(` Failed to update record ${record._id}:`, err.message);
       }
     }
+
+    // ------------------------ NEW CODE START --------------------------
+    // Reset upload status
+    uploadStatus.isUploading = false;
+    uploadStatus.dataToUpload = 0;
+    // ------------------------ NEW CODE END ----------------------------
 
     res.status(200).json({
       success: true,
@@ -254,7 +271,10 @@ export const updatedviewsbydate = async (req, res) => {
       updatedData: updatedRecords,
     });
   } catch (error) {
-    console.error("❌ Error updating views:", error);
+    console.error("Error updating views:", error);
+    uploadStatus.isUploading = false; // Failsafe reset
+    uploadStatus.dataToUpload = 0;
+
     res.status(500).json({
       success: false,
       error: "Internal server error",
