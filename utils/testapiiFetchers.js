@@ -1,5 +1,5 @@
 import axios from "axios";
-import dotenv, { config } from "dotenv";
+import dotenv from "dotenv";
 import { ApifyClient } from "apify-client";
 
 dotenv.config();
