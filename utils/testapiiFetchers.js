@@ -1,9 +1,11 @@
 import axios from "axios";
+import dotenv, { config } from "dotenv";
 import { ApifyClient } from "apify-client";
 
-const apifyToken = 'apify_api_mChJAFaea7dGkzJghriqVBF7mOpgMA1ctxPV';
-const youtubeApiKey = 'AIzaSyAw7tEpd_VoczeTePo9uU_rs7RzPHh959M';
-// const youtubeApiKey = 'AIzaSyASyv089yEe9a5CXGB2OHYbGVD0oCLC0vA';
+dotenv.config();
+
+const apifyToken = process.env.APIFY_API_TOKEN;
+const youtubeApiKey = process.env.YOUTUBE_API_TOKEN;
 // Initialize Apify client
 const apifyClient = new ApifyClient({ token: apifyToken });
 
