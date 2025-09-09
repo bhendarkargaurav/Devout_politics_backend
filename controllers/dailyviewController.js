@@ -724,6 +724,12 @@ export const getAllDataWithFilters = async (req, res) => {
       ytData = await VideoStat.find(ytMatchExpr || {}).lean();
       fbData = await VideoStat.find(fbMatchExpr || {}).lean();
       // portalData = await VideoStat.find(portalMatchExpr || {}).lean();
+    }  else if(!onlyYtFilter && onlyFbFilter && onlyPortalFilter){
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+      portalData = await VideoStat.find(portalMatchExpr || {}).lean();
+    }   else if(onlyYtFilter && !onlyFbFilter && onlyPortalFilter){
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+      portalData = await VideoStat.find(portalMatchExpr || {}).lean();
     } else {
       // If multiple filters applied together
       ytData = await VideoStat.find(ytMatchExpr || {}).lean();
