@@ -191,163 +191,6 @@ export const getAllPortalData = async(req, res) => {
 
 
 
-
-
-// get all data with multiple filter not as company want (Not in Work)
-export const getAllDataWithFilter = async (req, res) => {
-  try {
-    const {
-      youtubelink,
-      facebooklink,
-      initialDate,
-      endDate,
-      uploadDates,
-      uploadDate,
-      ytchannelName,
-      fbchannelName,
-    } = req.query;
-
-    //initializes MongoDB match expression using the $and operator, 
-    // which is used to combine multiple conditions.
-
-    const matchExpr = { $and: [] };
-
-    // Link filters
-    if (youtubelink) {
-      matchExpr.$and.push({ youtubelink });
-    }
-    if (facebooklink) {
-      matchExpr.$and.push({ facebooklink });
-    }
-
-    // Date filters
-    if (initialDate && endDate) {
-      matchExpr.$and.push({
-        uploadDate: {
-          $gte: new Date(initialDate),
-          $lte: new Date(endDate),
-        },
-      });
-    } else if (uploadDates) {
-      const datesArray = Array.isArray(uploadDates)
-        ? uploadDates
-        : uploadDates.split(",");
-      matchExpr.$and.push({
-        uploadDate: {
-          $in: datesArray.map((date) => new Date(date.trim())),
-        },
-      });
-    } else if (uploadDate) {
-      matchExpr.$and.push({
-        uploadDate: new Date(uploadDate),
-      });
-    }
-
-    // YouTube channel filter (case-insensitive + space-insensitive)
-    if (ytchannelName) {
-      const ytArray = Array.isArray(ytchannelName)
-        ? ytchannelName
-        : ytchannelName.split(",");
-      const cleanedYtChannels = ytArray.map((name) =>
-        name.trim().toLowerCase().replace(/\s/g, "")
-      );
-      matchExpr.$and.push({
-        $expr: {
-          $in: [
-            {
-              $replaceAll: {
-                input: { $toLower: "$youtubechannel" },
-                find: " ",
-                replacement: "",
-              },
-            },
-            cleanedYtChannels,
-          ],
-        },
-      });
-    }
-
-    // Facebook channel filter (case-insensitive + space-insensitive)
-    if (fbchannelName) {
-      const fbArray = Array.isArray(fbchannelName)
-        ? fbchannelName
-        : fbchannelName.split(",");
-      const cleanedFbChannels = fbArray.map((name) =>
-        name.trim().toLowerCase().replace(/\s/g, "")
-      );
-      matchExpr.$and.push({
-        $expr: {
-          $in: [
-            {
-              $replaceAll: {
-                input: { $toLower: "$facebookchannel" },
-                find: " ",
-                replacement: "",
-              },
-            },
-            cleanedFbChannels,
-          ],
-        },
-      });
-    }
-
-    // Match all if no filters applied
-    if (matchExpr.$and.length === 0) {
-      delete matchExpr.$and;
-    }
-
-    
-  //data accourding to specific filter
-    //new change   we have a code its in commented formate: bottom of getalldatawithfilter func.
-
-
-    // Fetch data and count
-    const [data, totalCount] = await Promise.all([
-      VideoStat.find(matchExpr).sort({ createdAt: -1 }).lean(), //.select(projection)
-      VideoStat.countDocuments(matchExpr),
-    ]);
-
-    // Calculate totals
-   const totals = data.reduce(
-  (acc, item) => {
-    acc.totalYoutubeViews += item.youtubeViews || 0;
-    acc.totalFacebookViews += item.facebookViews || 0;
-
-    if (item.youtubelink) acc.totalYoutubeLinks += 1;
-    if (item.youtubechannel) acc.totalYoutubeChannels += 1;
-
-    if (item.facebooklink) acc.totalFacebookLinks += 1;
-    if (item.facebookchannel) acc.totalFacebookChannels += 1;
-
-    return acc;
-  },
-  {
-    totalYoutubeChannels: 0,
-    totalYoutubeLinks: 0,
-    totalYoutubeViews: 0,
-    totalFacebookChannels: 0,
-    totalFacebookLinks: 0,
-    totalFacebookViews: 0,
-  }
-);
-
-
-    return res.status(200).json({
-      success: true,
-      totalCount,
-      totals,
-      //filterUsed: matchExpr, : it give what filter you applyied
-      data,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error fetching daily views",
-      error: error.message,
-    });
-  }
-};
-
 // get all data with filter as company WakeLockSentinel (Not in Work)
 export const abcgetAllDataWithFilters = async (req, res) => {
   try {
@@ -531,9 +374,8 @@ export const abcgetAllDataWithFilters = async (req, res) => {
 };
 
 
-
-//get all data -> as company want and export in csv and pdf format (currently working)
-export const getAllDataWithFilters = async (req, res) => {
+//3month work) portal filter not here
+export const zzzzzgetAllDataWithFilters = async (req, res) => {
   try {
     const {
       youtubelink,
@@ -720,6 +562,253 @@ return res.status(200).json({
   },
 });
 } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching data",
+      error: error.message,
+    });
+  }
+};
+
+
+// with portal filter current
+
+export const getAllDataWithFilters = async (req, res) => {
+  try {
+    const {
+      youtubelink,
+      facebooklink,
+      initialDate,
+      endDate,
+      uploadDates,
+      uploadDate,
+      ytchannelName,
+      fbchannelName,
+      portalchannelName,
+    } = req.query;
+
+    // Date filter
+    const dateFilter = {};
+    if (initialDate && endDate) {
+      dateFilter.uploadDate = {
+        $gte: new Date(initialDate),
+        $lte: new Date(endDate),
+      };
+    } else if (uploadDates) {
+      const datesArray = Array.isArray(uploadDates)
+        ? uploadDates
+        : uploadDates.split(",");
+      dateFilter.uploadDate = {
+        $in: datesArray.map((date) => new Date(date.trim())),
+      };
+    } else if (uploadDate) {
+      dateFilter.uploadDate = new Date(uploadDate);
+    }
+
+    const normalize = (str) => str.toLowerCase().replace(/\s/g, "");
+
+  
+    // YouTube filter logic----
+
+    let ytMatchExpr = null;
+    if (ytchannelName || youtubelink || Object.keys(dateFilter).length) {
+      ytMatchExpr = { ...dateFilter };
+
+      if (ytchannelName) {
+        const ytArray = Array.isArray(ytchannelName)
+          ? ytchannelName
+          : ytchannelName.split(",");
+        ytMatchExpr.$expr = {
+          $in: [
+            {
+              $replaceAll: {
+                input: { $toLower: "$youtubechannel" },
+                find: " ",
+                replacement: "",
+              },
+            },
+            ytArray.map(normalize),
+          ],
+        };
+      }
+
+      if (youtubelink) {
+        ytMatchExpr.youtubelink = youtubelink;
+      }
+    }
+
+    // Build Facebook filter logic
+
+    let fbMatchExpr = null;
+    if (fbchannelName || facebooklink || Object.keys(dateFilter).length) {
+      fbMatchExpr = { ...dateFilter };
+
+      if (fbchannelName) {
+        const fbArray = Array.isArray(fbchannelName)
+          ? fbchannelName
+          : fbchannelName.split(",");
+        fbMatchExpr.$expr = {
+          $in: [
+            {
+              $replaceAll: {
+                input: { $toLower: "$facebookchannel" },
+                find: " ",
+                replacement: "",
+              },
+            },
+            fbArray.map(normalize),
+          ],
+        };
+      }
+
+      if (facebooklink) {
+        fbMatchExpr.facebooklink = facebooklink;
+      }
+    }
+
+    //Portal filter logic
+    
+    let portalMatchExpr = null;
+    if (portalchannelName || Object.keys(dateFilter).length) {
+      portalMatchExpr = { ...dateFilter };
+
+      if (portalchannelName) {
+        const portalArray = Array.isArray(portalchannelName)
+          ? portalchannelName
+          : portalchannelName.split(",");
+        portalMatchExpr.$expr = {
+          $in: [
+            {
+              $replaceAll: {
+                input: { $toLower: "$portalchannel" },
+                find: " ",
+                replacement: "",
+              },
+            },
+            portalArray.map(normalize),
+          ],
+        };
+      }
+    }
+
+    
+    // Determine filter intent
+    
+    const onlyYtFilter = ytchannelName || youtubelink;
+    const onlyFbFilter = fbchannelName || facebooklink;
+    const onlyPortalFilter = portalchannelName;
+
+    let ytData = [];
+    let fbData = [];
+    let portalData = [];
+
+    if (onlyYtFilter && !onlyFbFilter && !onlyPortalFilter) {
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+    } else if (onlyFbFilter && !onlyYtFilter && !onlyPortalFilter) {
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+    } else if (onlyPortalFilter && !onlyYtFilter && !onlyFbFilter) {
+      portalData = await VideoStat.find(portalMatchExpr || {}).lean();
+    } else if (!onlyYtFilter && !onlyFbFilter && !onlyPortalFilter && Object.keys(dateFilter).length) {
+      // Only date filter
+      ytData = await VideoStat.find(dateFilter).lean();
+      fbData = await VideoStat.find(dateFilter).lean();
+      portalData = await VideoStat.find(dateFilter).lean();
+    } else if (!onlyYtFilter && !onlyFbFilter && !onlyPortalFilter) {
+      // No filters at all
+      ytData = await VideoStat.find({}).lean();
+      fbData = await VideoStat.find({}).lean();
+      portalData = await VideoStat.find({}).lean();
+    } else if (onlyYtFilter && onlyFbFilter && !onlyPortalFilter){
+      // If multiple filters applied together
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+      // portalData = await VideoStat.find(portalMatchExpr || {}).lean();
+    } else {
+      // If multiple filters applied together
+      ytData = await VideoStat.find(ytMatchExpr || {}).lean();
+      fbData = await VideoStat.find(fbMatchExpr || {}).lean();
+      portalData = await VideoStat.find(portalMatchExpr || {}).lean();
+    }
+
+    // YouTube totals
+    const ytTotals = ytData.reduce(
+      (acc, item) => {
+        acc.totalYoutubeViews += item.youtubeViews || 0;
+        if (item.youtubelink) acc.totalYoutubeLinks += 1;
+        if (item.youtubechannel) acc.totalYoutubeChannels += 1;
+        return acc;
+      },
+      {
+        totalYoutubeViews: 0,
+        totalYoutubeLinks: 0,
+        totalYoutubeChannels: 0,
+      }
+    );
+
+    // Facebook totals
+    const fbTotals = fbData.reduce(
+      (acc, item) => {
+        acc.totalFacebookViews += item.facebookViews || 0;
+        if (item.facebooklink) acc.totalFacebookLinks += 1;
+        if (item.facebookchannel) acc.totalFacebookChannels += 1;
+        return acc;
+      },
+      {
+        totalFacebookViews: 0,
+        totalFacebookLinks: 0,
+        totalFacebookChannels: 0,
+      }
+    );
+
+    // Portal totals
+   
+    const portalTotals = portalData.reduce(
+      (acc, item) => {
+        acc.totalPortalViews += item.portalViews || 0;
+        if (item.portallink) acc.totalPortalLinks += 1;
+        if (item.portalchannel) acc.totalPortalChannels += 1;
+        return acc;
+      },
+      {
+        totalPortalViews: 0,
+        totalPortalLinks: 0,
+        totalPortalChannels: 0,
+      }
+    );
+
+    const combinedData = [...ytData, ...fbData, ...portalData];
+
+
+    
+    if (req.query.format === "csv") {
+      return exportToCSV(res, combinedData, "filtered_data.csv");
+    }
+
+    if (req.query.format === "pdf") {
+      return exportToPDF(res, combinedData, "filtered_data.pdf");
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      youtube: {
+        count: ytData.length,
+        totals: ytTotals,
+        data: ytData,
+      },
+      facebook: {
+        count: fbData.length,
+        totals: fbTotals,
+        data: fbData,
+      },
+      portal: {
+        count: portalData.length,
+        totals: portalTotals,
+        data: portalData,
+      },
+    });
+  } catch (error) {
     console.error("Error:", error);
     return res.status(500).json({
       success: false,
