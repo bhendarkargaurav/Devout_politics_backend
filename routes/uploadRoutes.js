@@ -30,8 +30,10 @@
 import express from "express";
 import multer from "multer";
 import upload from "../middleware/multer.js"
+import uploadnews from "../middleware/newsmulter.js"
 
 import { uploadCSV } from "../controllers/uploadControllers.js";
+import { uploadNewsData, getAllNews } from "../controllers/uploadNewsController.js";
 
 import { 
     getPaginatedVideos, 
@@ -106,7 +108,15 @@ router.patch("/do-update/:id", UpdateVideoData);
 //testingRoute
 router.post("/upload", upload.single("file"), uploadCSV);
 
-//server should load without sleep
+
+
+//news routers
+
+router.post("/upload-news", uploadnews.array("images", 5), uploadNewsData);
+router.get("/getnews-data", getAllNews );
+
+
+
 router.get("/health", (req, res) => {
     res.status(200).send('OK');
 })
