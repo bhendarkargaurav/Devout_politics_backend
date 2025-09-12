@@ -4,8 +4,9 @@ import path from "path";
 import { Parser } from "json2csv";
 import VideoStat from "../model/urlmodel.js";
 import { getYoutubeViews, getFacebookViews } from "../utils/testapiiFetchers.js";
-import uploadStatus from "../middleware/uploadStatusMiddleware.js";
-
+// import uploadStatus from "../middleware/uploadStatusMiddleware.js";
+import updateStatus from "../middleware/updateStatusMiddleware.js"
+       
 export const getPaginatedVideos = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -200,11 +201,9 @@ export const updatedviewsbydate = async (req, res) => {
     const updatedRecords = [];
     const safeNumbers = (num) => (Number.isFinite(num) ? num : 0);
 
-    // ------------------------ NEW CODE START --------------------------
     // Set upload status tracking
-    uploadStatus.isUploading = true;
-    uploadStatus.dataToUpload = records.length;
-    // ------------------------ NEW CODE END ----------------------------
+    updateStatus.isUpdating = true;
+    updateStatus.dataToUpdate= records.length;
 
     for (const record of records) {
       try {
@@ -248,10 +247,9 @@ export const updatedviewsbydate = async (req, res) => {
           totalViews,
         });
 
-        // ------------------------ NEW CODE START --------------------------
-        uploadStatus.dataToUpload--; // Decrement count
-        console.log(`Remaining: ${uploadStatus.dataToUpload}`); // Log remaining updates
-        // ------------------------ NEW CODE END ----------------------------
+        updateStatus.dataToUpdate--; // Decrement count
+        console.log(`Remaining: ${updateStatus.dataToUpdate}`); // Log remaining updates
+    
 
         console.log(` Updated: ${record._id}`);
       } catch (err) {
@@ -259,11 +257,9 @@ export const updatedviewsbydate = async (req, res) => {
       }
     }
 
-    // ------------------------ NEW CODE START --------------------------
     // Reset upload status
-    uploadStatus.isUploading = false;
-    uploadStatus.dataToUpload = 0;
-    // ------------------------ NEW CODE END ----------------------------
+    updateStatus.isUpdating = false;
+    updateStatus.dataToUpdate = 0;
 
     res.status(200).json({
       success: true,
@@ -272,8 +268,8 @@ export const updatedviewsbydate = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating views:", error);
-    uploadStatus.isUploading = false; // Failsafe reset
-    uploadStatus.dataToUpload = 0;
+    updateStatus.isUpdating = false;
+    updateStatus.dataToUpdate = 0;
 
     res.status(500).json({
       success: false,

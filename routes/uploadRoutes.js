@@ -41,6 +41,7 @@ import {
 } from "../controllers/exportAllDataControllers.js";
 
 import { getUploadStatus } from "../controllers/isUploadingController.js";
+import { getUpdateStatus } from "../controllers/isUpdatingController.js"
 
 import { 
     getAllDataWithFilters,
@@ -98,6 +99,8 @@ router.get("/portal-channel", getPortalchannel);
 router.get("/portal-data", getportalData)
 
 router.get("/isuploading", getUploadStatus);
+router.get("/isupdating", getUpdateStatus);
+
 router.patch("/do-update/:id", UpdateVideoData);
 
 //testingRoute
@@ -107,6 +110,5 @@ router.post("/upload", upload.single("file"), uploadCSV);
 router.get("/health", (req, res) => {
     res.status(200).send('OK');
 })
-
 
 export default router;   
