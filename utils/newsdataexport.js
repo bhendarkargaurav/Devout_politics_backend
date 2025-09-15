@@ -30,7 +30,6 @@ export const exportToCSV = (res, data, filename) => {
 
 // Helper: fetch image as buffer
 const fetchImageBuffer = async (url) => {
-  console.log("kjbgjkgyjcgfUGD", url);
   const response = await axios.get(url, { responseType: "arraybuffer" });
   return Buffer.from(response.data, "binary");
 };
@@ -39,52 +38,54 @@ export const exportToPDF = async (res, data, filename) => {
   res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
   res.setHeader("Content-Type", "application/pdf");
 
-  console.log("data is", data,data[0].images);
-  //  console.log("res is", res);
-    console.log("filename is", filename, "yz");
-
   const doc = new PDFDocument({ margin: 30 });
   doc.pipe(res);
-
-  // Title
-  doc.fontSize(18).text("Filtered News Report", { align: "center" });
-  doc.moveDown();
 
   for (let i = 0; i < data.length; i++) {
     const item = data[i];
 
-    // News metadata
+    // Title for each news item
+    doc.fontSize(16)//.text({ align: "center" });//`News ${i + 1}`
+    doc.moveDown(1);
+
+    // Metadata
     doc
       .fontSize(12)
       .fillColor("black")
+      .text(`Newspaper: ${item.newspaperName}`)
+      .text(`City: ${item.city || "-"}`)
+      // .text(`Type: ${item.type}`)
       // .text(
-      //   `${i + 1}. ${item.newspaperName} | ${item.city || "-"} | ${
-      //     item.type
-      //   } | ${new Date(item.uploadDate).toISOString().split("T")[0]}`
+      //   `Upload Date: ${new Date(item.uploadDate).toISOString().split("T")[0]}`
       // );
 
-    // Add images if present
+    doc.moveDown(1);
+
+    // Add images (each resized, max width/height 250)
     if (item.images && item.images.length > 0) {
       for (let img of item.images) {
         try {
-          const buffer = await fetchImageBuffer(img.url); // ✅ fetch Cloudinary image
-          doc.moveDown(0.3);
+          const buffer = await fetchImageBuffer(img.url);
           doc.image(buffer, {
-            fit: [400, 400],
+            fit: [520, 550],
             align: "center",
+            valign: "center",
           });
+          doc.moveDown(1);
         } catch (err) {
           doc
-            .moveDown(0.5)  //0.3
             .fontSize(10)
             .fillColor("red")
-            .text("Image could not be loaded");
+            .text("⚠ Image could not be loaded");
           doc.fillColor("black");
         }
       }
     }
 
-    doc.moveDown(1);
+    // Add new page if not last item
+    if (i < data.length - 1) {
+      doc.addPage();
+    }
   }
 
   doc.end();
