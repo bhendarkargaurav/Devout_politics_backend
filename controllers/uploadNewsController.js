@@ -5,7 +5,7 @@ import { exportToCSV, exportToPDF } from "../utils/newsdataexport.js";
 
 export const uploadNewsData = async (req, res) => {
   try {
-    const { newspaperName, city, type, uploadDate } = req.body;
+    const { newspaperName, city, type, uploadDate, pageNumber } = req.body;
 
     if (!newspaperName || !type) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -30,6 +30,7 @@ export const uploadNewsData = async (req, res) => {
       type,
       uploadDate: uploadDate || Date.now(),
       images: imageUploads,
+      pageNumber
     });
 
     await news.save();
@@ -56,6 +57,28 @@ export const getAllNews = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+
+export const deleteOneData = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleteNews = await News.findByIdAndDelete(id);
+
+    if(!deleteNews) {
+      res.status(401).json({success: false, message: "News Not found"});
+    }
+
+    res.status(201).json({success: true, message: "News deleted Successfully", deleteNews});
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server Error",
+      err: error
+    })
+  }
+}
 
 
 
