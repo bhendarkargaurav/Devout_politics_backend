@@ -19,7 +19,7 @@ const newsSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["positive", "negative", "crime", "other"], // can be extended dynamically
+      enum: ["Positive", "Negative", "Crime", "Add", "All party"], // can be extended dynamically
       default: "other",
     },
     uploadDate: {
