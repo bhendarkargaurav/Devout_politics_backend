@@ -33,7 +33,7 @@ import upload from "../middleware/multer.js"
 import uploadnews from "../middleware/newsmulter.js"
 
 import { uploadCSV } from "../controllers/uploadControllers.js";
-import { uploadNewsData, getAllNews,  getFilteredNews } from "../controllers/uploadNewsController.js";
+import { uploadNewsData, getAllNews, deleteOneData, getFilteredNews } from "../controllers/uploadNewsController.js";
 
 import { 
     getPaginatedVideos, 
@@ -115,6 +115,7 @@ router.post("/upload", upload.single("file"), uploadCSV);
 router.post("/upload-news", uploadnews.array("images", 5), uploadNewsData);
 router.get("/getnews-data", getAllNews );
 router.get("/filter-news",  getFilteredNews);
+router.delete("/delete-news/:id",  deleteOneData);
 
 
 

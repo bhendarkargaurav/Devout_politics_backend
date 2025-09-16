@@ -8,6 +8,9 @@ const newsSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    pageNumber: {
+      type: String,
+    },
     city: {
       type: String,
     //   required: true,
