@@ -11,20 +11,21 @@ export const UpdateVideoData = async (req, res) => {
 
         // fields allowed to edit/update
         const allowedFields = [
-            'youtubelink',
-            'youtubeViews',
-            'youtubechannel',
-            'youtubeComments',
-            'youtubeLikes',
-            'facebooklink',
-            'facebookchannel',
-            'facebookViews',
-            'facebookLikes',
-            'facebookComments',
-            'portallink',
-            'portalchannel',
             'uploadDate', 
         ];
+
+        // 'youtubelink',
+        //     'youtubeViews',
+        //     'youtubechannel',
+        //     'youtubeComments',
+        //     'youtubeLikes',
+        //     'facebooklink',
+        //     'facebookchannel',
+        //     'facebookViews',
+        //     'facebookLikes',
+        //     'facebookComments',
+        //     'portallink',
+        //     'portalchannel',
 
         // filter req.body to only include allowed fields
         const updateFields = {};         // to store valid field
